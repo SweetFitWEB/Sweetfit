@@ -1,0 +1,128 @@
+<div class="ventas-contenedor">
+  <!-- Formulario Nueva Venta -->
+  <div class="formulario-venta">
+    <h2>Registrar Nueva Venta</h2>
+    <form id="formVenta">
+      
+      <!-- Información del cliente -->
+      <fieldset class="grupo-cliente">
+        <legend>Datos del Cliente (opcional para factura)</legend>
+        <div class="grid-form">
+          <input type="text" id="nombreCliente" name="nombre_cliente" placeholder="Nombre(s) del cliente" />
+          <input type="text" id="apellidoPaterno" name="apellido_paterno" placeholder="Apellido paterno" />
+          <input type="text" id="apellidoMaterno" name="apellido_materno" placeholder="Apellido materno" />
+          <input type="text" id="direccionCliente" name="direccion" placeholder="Dirección" />
+          <input type="tel" id="telefonoCliente" name="telefono" placeholder="Teléfono (10 dígitos)" pattern="[0-9]{10}" />
+        </div>
+      </fieldset>
+
+      <!-- Información general de la venta -->
+      <div class="grid-form">
+        <input type="text" id="empleado" name="empleado" placeholder="Empleado" readonly class="input-deshabilitado"/>
+        <select id="tipoVenta" name="tipo_venta" required>
+          <option value="">Tipo de Venta</option>
+          <option value="LOCAL">Local</option>
+          <option value="DOMICILIO">Domicilio</option>
+          <option value="APP">App</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn-agregar-producto" onclick="abrirModalProductos()">Seleccionar Productos</button>
+
+      <!-- Tabla carrito -->
+      <table class="lista-productos-seleccionados" id="tablaCarrito">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+            <th>Eliminar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- productos se agregan con JS -->
+        </tbody>
+      </table>
+
+      <div class="footer-venta">
+        <strong>Total: $<span id="totalVenta">0.00</span></strong>
+        <button type="button" class="btn-agregar-producto"id="btnRegistrarVenta" onclick="registrarVenta()">Registrar venta</button>
+        <button type="button" class="btn-agregar-producto" id="btnGuardarEspera" onclick="guardarEnEspera()">Guardar en espera</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Historial de ventas -->
+  <div class="historial-ventas">
+    <h3>Historial de Ventas</h3>
+
+    <div>
+      <input type="date" id="filtroFechaInicio" />
+      <input type="date" id="filtroFechaFin" />
+      <select id="filtroTipo">
+        <option value="">Todos los Tipos</option>
+        <option value="LOCAL">Local</option>
+        <option value="DOMICILIO">Domicilio</option>
+        <option value="APP">App</option>
+      </select>
+      <select name="empleado" id="selectEmpleadoVenta" required>
+        <option value="">Seleccionar Empleado</option>
+      </select>        
+      
+      <button class="btn-agregar-producto" onclick="filtrarVentas()">Filtrar</button>
+    </div>
+
+    <div>
+      <table id="tablaVentas" class="lista-productos-seleccionados">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Empleado</th>
+            <th>Total</th>
+            <th>Estatus</th>
+            <th>Detalle</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- registros dinámicos con JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para seleccionar productos -->
+<div class="modal-productos" id="modalSeleccionarProductos">
+  <div class="modal-productos-contenido">
+    <span class="cerrar-modal" onclick="cerrarModalProductos()">&times;</span>
+    <div class="modal-header">
+      <h3 class="titulo-modal">🛒 Selecciona los productos</h3>
+      <input type="text" id="buscador-modal" placeholder="🔍 Buscar producto..." />
+    </div>
+    <div class="grid-modal-productos" id="gridModalProductos">
+      <!-- Tarjetas dinámicas -->
+    </div>
+    <div class="contenedor-paginacion-modal">
+      <div id="paginacionModalProductos" class="paginacion-modal-productos"></div>
+    </div>      
+  </div>
+</div>
+
+<!-- Modal Detalle de Venta -->
+<div class="modal-productos" id="modalDetalleVenta">
+  <div class="modal-productos-contenido">
+    <span class="cerrar-modal" onclick="cerrarModalDetalleVenta()">&times;</span>
+    <h3>Detalle de Venta</h3>
+    <div id="detalleVentaContenido">
+      <img src="img/logosweet.png" style="max-width: 100px; display: block; margin: auto;">
+      <!-- este se cargara de la base de datos-->
+    </div>
+    <div class="boton-imprimir-ticket">
+      <button onclick="imprimirTicket()">Imprimir Ticket</button>
+    </div>
+  </div>
+</div>

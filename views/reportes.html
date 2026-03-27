@@ -1,0 +1,36 @@
+<div id="reportesContenido">
+  <div class="reportes-header">
+    <div class="acciones-reportes">
+      <select id="tipoReporte">
+        <option value="diario">📅 Diario</option>
+        <option value="semanal">🗓️ Semanal</option>
+        <option value="mensual">📆 Mensual</option>
+      </select>
+
+      <!-- BLOQUE DE INPUTS DE FECHA -->
+      <div class="selectores-fecha">
+        <input type="date" id="fechaDia"/>
+        <input type="week" id="fechaSemana"/>
+        <input type="month" id="fechaMes"/>
+      </div>
+      <!-- FIN BLOQUE -->
+
+      <button class="btn-descargar" id="btnDescargarCSV">
+        <i class="fi fi-br-download"></i> CSV
+      </button>
+      <button class="btn-descargar" id="btnDescargarPDF">
+        <i class="fi fi-br-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="grafica-reportes">
+    <h3>📈 Ventas <span id="tituloTipoReporte">Diarias</span></h3>
+    <canvas id="graficaVentas" height="120"></canvas>
+  </div>
+
+  <div class="comparativa-categorias">
+    <h3>📊 Categorías más vendidas</h3>
+    <canvas id="graficaCategorias" height="120"></canvas>
+  </div>
+</div>

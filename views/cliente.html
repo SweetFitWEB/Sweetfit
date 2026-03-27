@@ -1,0 +1,38 @@
+  <div class="clientes-header">
+    <div class="acciones-clientes">
+      <input type="text" id="buscadorClientes" placeholder="🔍 Buscar producto..." />
+      <button class="btn-agregar-cliente" onclick="abrirModalCliente()">➕ Agregar Cliente</button>
+    </div>
+  </div>
+  
+  <div id="listaClientes" class="grid-clientes">
+
+  </div>
+  
+  <!-- Modal para agregar/editar cliente -->
+  <div class="modal" id="modalCliente">
+    <div class="modal-contenido">
+      <span class="cerrar-modal" id="cerrarModalCliente">&times;</span>
+      <h3 id="tituloModalCliente">Agregar Cliente</h3>
+      <form id="formCliente">
+        <input type="text" name="nombre" placeholder="Nombre" required />
+        <input type="text" name="apellido_paterno" placeholder="Apellido Paterno" />
+        <input type="text" name="apellido_materno" placeholder="Apellido Materno" />
+        <input type="text" name="telefono" placeholder="Teléfono" />
+        <textarea name="direccion" placeholder="Dirección"></textarea>
+        <button type="submit">Guardar</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Panel deslizante para historial -->
+  <div class="historial-panel" id="historialPanel">
+    <div class="historial-header">
+      <h3>Historial de Compras</h3>
+      <span class="cerrar-historial" onclick="cerrarHistorialCliente()">×</span>
+    </div>
+    <div class="contenido-historial" id="contenidoHistorial">
+      <!-- Aquí se cargará el historial dinámicamente -->
+    </div>
+  </div>
+  

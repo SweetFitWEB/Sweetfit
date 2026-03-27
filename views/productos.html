@@ -1,0 +1,53 @@
+<div class="productos-header">
+  <h2>Menú</h2>
+  <div class="acciones-header">
+    <input type="text" id="buscador" placeholder="🔍 Buscar producto..." />
+    <button class="btn-agregar-producto">➕ Agregar producto</button>
+  </div>
+</div>
+
+<!-- FILTROS DE LA CATEGORIAS -->
+<div class="filtros-categorias" id="filtrosCategorias">
+  <!-- AQUI IRAN LAS CATEGORIAS DE FORMA DINAMICA SACADAS DEL app.py Y DEL script.js-->
+</div>
+
+<div class="grid-productos" id="gridProductos">
+  <!-- AQUI SE INSERTARAN LOS PRODUCTOS DESDE LA BASE DE DATOS -->
+</div>
+
+<div class="paginacion" id="paginacionProductos">
+  <!-- Los botones se insertarán dinámicamente con JS -->
+</div>
+
+<!-- MODAL PARA AGREGAR PRODUCTO -->
+<div id="modalAgregarProducto" class="modal">
+  <div class="modal-contenido">
+    <span id="cerrarModal" class="cerrar">✖&times;</span>
+    <h3>Agregar nuevo producto</h3>
+    <form id="formAgregarProducto" enctype="multipart/form-data" method="POST">
+      <input type="hidden" id="productoId" name="id_producto" />
+      <input type="hidden" name="_method" value="PUT"> <!-- Para simular método PUT -->
+      
+      <input type="text" id="nombre" name="nombre" placeholder="Nombre del producto" required />
+      <input type="text" id="descripcion" name="descripcion" placeholder="Descripción" required />
+      <input type="number" id="precio" name="precio" placeholder="Precio" step="0.01" required />
+      <input type="number" id="cantidad" name="cantidad" placeholder="Stock" min="0" required />
+      
+      <select id="categoria" name="categoria" required>
+        <option value="">Seleccione categoría</option>
+        <option value="Hamburguesas">Hamburguesas</option>
+        <option value="Hot Dogs">Hot Dogs</option>
+        <option value="Postres">Postres</option>
+        <option value="Bebidas">Bebidas</option>
+        <option value="Papas">Papas</option>
+      </select>
+
+      <!-- Imagen con vista previa -->
+      <label for="imagen">Seleccionar imagen:</label>
+      <input type="file" id="imagen" name="imagen" accept="image/*" />
+      <img id="previewImagen" style="max-height: 120px; margin-top: 10px; display: none;" />
+
+      <button type="submit">Guardar cambios</button>
+    </form>
+  </div>
+</div>

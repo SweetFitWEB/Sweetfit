@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PINCHES HAMBURGUESAS - Panel</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet"/>
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="logo-container">
+      <button class="toggle-btn" id="toggleSidebar">☰</button>
+      <img src="img/pinchesHamburguesas.png" alt="Logo Sweetfit" class="logo-img" />
+    </div>
+
+    <div class="menu">
+      <a href="#" data-page="panel.html"><span class="fi fi-br-house-chimney"></span> <span class="text">Panel</span></a>
+      <a href="#" data-page="productos.html"><span class="fi fi-br-grocery-basket"></span> <span class="text">Productos</span></a>
+      <a href="#" data-page="ventas.html"><span class="fi fi-br-usd-circle"></span> <span class="text">Ventas</span></a>
+      <a href="#" data-page="cliente.html"><span class="fi fi-br-users"></span> <span class="text">Clientes</span></a>
+      <a href="#" data-page="proveedor.html"><span class="fi fi-br-truck-box"></span> <span class="text">Proveedores</span></a>
+      <a href="#" data-page="reportes.html"><span class="fi fi-br-document"></span> <span class="text">Reportes</span></a>
+      <a href="#" data-page="configuracion.html"><span class="fi fi-br-function-process"></span> <span class="text">Configuración</span></a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <h2 id="titulo-vista">Panel Principal</h2>
+      <div class="dropdown">
+        <button class="dropdown-toggle" id="userButton"> 
+          <span class="fi fi-br-circle-user"></span> 
+          <span id="userLabel"></span>
+        </button>
+
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a class="dropdown-item" href="#" id="logoutButton">Cerrar sesión</a>
+        </div>
+      </div>
+</div>
+
+    <!-- Contenido dinámico -->
+    <div id="content-area">
+      <!-- Aquí se cargan las vistas desde /views -->
+    </div>
+  </div>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
