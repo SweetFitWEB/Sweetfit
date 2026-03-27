@@ -1,179 +1,183 @@
 :root {
-  /* Beige intenso como base */
-  --color-primario: #D9A773;           /* Beige caramelo tostado */
-  --color-primario-hover: #C88E58;     /* Más oscuro al pasar el mouse */
-  --color-primario-oscuro: #A46C3E;    /* Aún más profundo para bordes */
+  /* Verde corporativo Sweet Fit */
+  --color-primario: #ABBF7F;
+  --color-primario-hover: #8FA865;
+  --color-primario-oscuro: #6B8A45;
 
-  /* Rojo acento fuerte */
-  --color-secundario: #C0392B;         /* Rojo vibrante */
-  --color-secundario-hover: #992D22;   /* Rojo oscuro para hover */
+  /* Rosa/rojo corporativo */
+  --color-secundario: #F16278;
+  --color-secundario-hover: #D94560;
 
-  /* Verde acento intenso */
-  --color-terciario: #1E5631;          /* Verde profundo */
-  --color-terciario-claro: #4B8B5A;    /* Verde medio */
+  /* Azul grisáceo corporativo */
+  --color-terciario: #A7BAC7;
+  --color-terciario-claro: #C8D8E2;
 
-  /* Textos muy contrastantes */
-  --color-texto: #2A1A0E;              /* Marrón casi negro */
-  --color-texto-claro: #4F3A29;        /* Marrón más suave */
+  /* Textos */
+  --color-texto: #2A2A2A;
+  --color-texto-claro: #5A5A5A;
 
   /* Complementarios */
   --color-blanco: #FFFFFF;
-  --color-gris-claro: #F4E9DE;         /* Fondo secundario beige claro */
-  --color-gris: #DDC5B0;               /* Separadores */
+  --color-gris-claro: #F5F0E8;
+  /* beige del manual */
+  --color-gris: #DDD8CE;
 
-  /* Sombras más notorias */
-  --sombra-suave: 0 2px 10px rgba(164, 108, 62, 0.25);
-  --sombra-media: 0 4px 14px rgba(164, 108, 62, 0.35);
+  /* Sombras */
+  --sombra-suave: 0 2px 10px rgba(107, 138, 69, 0.2);
+  --sombra-media: 0 4px 14px rgba(107, 138, 69, 0.3);
+
 }
 
 /* ======== ESTILOS DE LA INTERFAZ DEL INDEX ======== */
 body {
-    margin: 0;
-    font-family: 'Poppins', sans-serif;
-    background: #f4f4f4;
-  }
-  
-  .container {
-    display: flex;
-  }
-  
-  .sidebar {
-    width: 220px;
-    background:  #3A2D23;
-    color: white;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    transition: width 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    z-index: 10;
-  }
-  
-  .sidebar.collapsed {
-    width: 80px;
-  }
-  
-  .logo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    font-size: 20px;
-    font-weight: bold;
-  }
-  
-  .toggle-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 22px;
-    cursor: pointer;
-    align-self: flex-end;
-  }
-  
-  .menu {
-    padding: 0 10px;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .menu a {
-    display: flex;
-    align-items: center;
-    padding: 12px 10px;
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-    transition: background 0.3s;
-  }
-  
-  .menu a:hover {
-    background: #222222;
-  }
-  
-  .menu .text {
-    margin-left: 10px;
-    transition: opacity 0.3s;
-  }
-  
-  .sidebar.collapsed .text {
-    opacity: 0;
-    pointer-events: none;
-  }
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #f4f4f4;
+}
 
-  .logo-container {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 6px 20px;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .logo-img {
-    height: 160px;
-    transition: height 0.3s ease, transform 0.3s ease;
-    object-fit: contain;
-  }
-  
-  .sidebar.collapsed .logo-img {
-    height: 40px;
-  }
-  
-  .main {
-    flex: 1;
-    padding: 5px;
-    margin-left: 220px;
-    transition: margin-left 0.3s ease;
-  }
-  
-  .sidebar.collapsed + .main {
-    margin-left: 80px;
-  }
+.container {
+  display: flex;
+}
 
-  .topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+.sidebar {
+  width: 220px;
+  background: #ABBF7F;
+  color: white;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.logo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.menu {
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  padding: 12px 10px;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+.menu a:hover {
+  background: #222222;
+}
+
+.menu .text {
+  margin-left: 10px;
+  transition: opacity 0.3s;
+}
+
+.sidebar.collapsed .text {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.logo-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 6px 20px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.logo-img {
+  height: 160px;
+  transition: height 0.3s ease, transform 0.3s ease;
+  object-fit: contain;
+}
+
+.sidebar.collapsed .logo-img {
+  height: 40px;
+}
+
+.main {
+  flex: 1;
+  padding: 5px;
+  margin-left: 220px;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed+.main {
+  margin-left: 80px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 /* _____________________________________________________________________________*/
-  
+
 /* ======== ESTILOS DE LA INTERFAZ DEL PANEL ======== */
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
-  }
-  
-  .card {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-  
-  .card h3 {
-    margin: 0;
-    font-size: 16px;
-    color: #777;
-  }
-  
-  .card p {
-    margin: 10px 0 0;
-    font-size: 22px;
-    color: #7d9eb8;
-    font-weight: bold;
-  }
-  
-  .placeholder {
-    margin-top: 40px;
-    text-align: center;
-    color: #aaa;
-  }
-  .dropdown {
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #777;
+}
+
+.card p {
+  margin: 10px 0 0;
+  font-size: 22px;
+  color: #7d9eb8;
+  font-weight: bold;
+}
+
+.placeholder {
+  margin-top: 40px;
+  text-align: center;
+  color: #aaa;
+}
+
+.dropdown {
   position: relative;
   display: inline-block;
 }
@@ -187,8 +191,8 @@ body {
   font-size: 14px;
 }
 
-.dropdown-toggle:hover{
-  background-color: #bfbbbb ;
+.dropdown-toggle:hover {
+  background-color: #bfbbbb;
 }
 
 .dropdown-menu {
@@ -198,7 +202,7 @@ body {
   right: 0;
   background-color: #fff;
   min-width: 160px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #ccc;
   border-radius: 4px;
   z-index: 1000;
@@ -215,6 +219,7 @@ body {
 .dropdown-item:hover {
   background-color: #f1f1f1;
 }
+
 /* _____________________________________________________________________________*/
 
 /* ======== ESTILOS DE LA INTERFAZ DE PRODUCTOS ======== */
@@ -242,6 +247,7 @@ body {
   cursor: pointer;
   transition: background-color 0.3s;
 }
+
 .btn-agregar-producto:hover {
   background-color: var(--color-primario-hover);
 }
@@ -335,9 +341,11 @@ body {
 .modal {
   display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.5);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
   z-index: 999;
@@ -349,7 +357,7 @@ body {
   border-radius: 12px;
   width: 90%;
   max-height: 90vh;
-  overflow-y: auto; 
+  overflow-y: auto;
   max-width: 500px;
   position: relative;
   box-shadow: var(--sombra-media);
@@ -357,7 +365,8 @@ body {
 
 .cerrar-modal {
   position: absolute;
-  top: 10px; right: 15px;
+  top: 10px;
+  right: 15px;
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--color-texto);
@@ -388,6 +397,7 @@ body {
   font-weight: bold;
   transition: background-color 0.3s;
 }
+
 .modal form button:hover {
   background-color: var(--color-primario-hover);
 }
@@ -409,7 +419,8 @@ body {
 }
 
 .stock-bajo {
-  color: #d32f2f; /* Mantengo rojo para alerta */
+  color: #d32f2f;
+  /* Mantengo rojo para alerta */
   font-weight: bold;
 }
 
@@ -440,6 +451,7 @@ body {
   background-color: var(--color-texto-claro);
   color: var(--color-blanco);
 }
+
 /* _____________________________________________________________________________*/
 
 /* ======== ESTILOS DE LA INTERFAZ DE VENTAS ======== */
@@ -476,7 +488,8 @@ fieldset.grupo-cliente legend {
   gap: 1rem;
 }
 
-.grid-form input, .grid-form select {
+.grid-form input,
+.grid-form select {
   flex: 1 1 200px;
   padding: 0.6rem;
   border: 1px solid var(--color-borde);
@@ -545,9 +558,11 @@ fieldset.grupo-cliente legend {
 .modal-productos {
   display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.5);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
   z-index: 1000;
@@ -576,6 +591,7 @@ fieldset.grupo-cliente legend {
   cursor: pointer;
   transition: color 0.3s;
 }
+
 .modal-productos .cerrar-modal:hover {
   color: var(--color-primario);
 }
@@ -603,6 +619,7 @@ fieldset.grupo-cliente legend {
   font-size: 1rem;
   transition: border-color 0.3s;
 }
+
 #buscador-modal:focus {
   border-color: var(--color-primario);
   outline: none;
@@ -677,13 +694,15 @@ fieldset.grupo-cliente legend {
 .producto-card input[type="number"]:focus {
   outline: none;
   border-color: var(--color-primario);
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2); /* sombra verde */
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+  /* sombra verde */
 }
 
 /* Grilla */
 .grid-modal-productos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Más ancho */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  /* Más ancho */
   gap: 1.2rem;
   padding: 1rem 0.5rem;
 }
@@ -714,6 +733,7 @@ fieldset.grupo-cliente legend {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
+
 .paginacion-modal-productos button:hover,
 .paginacion-modal-productos button.activo {
   background-color: var(--color-primario);
@@ -723,7 +743,8 @@ fieldset.grupo-cliente legend {
 
 .estado-finalizada {
   color: white;
-  background-color: #28a745; /* verde */
+  background-color: #28a745;
+  /* verde */
   font-weight: bold;
   padding: 3px 8px;
   border-radius: 4px;
@@ -734,7 +755,8 @@ fieldset.grupo-cliente legend {
 
 .estado-en-espera {
   color: #856404;
-  background-color: #fff3cd; /* amarillo claro */
+  background-color: #fff3cd;
+  /* amarillo claro */
   font-weight: bold;
   padding: 3px 8px;
   border-radius: 4px;
@@ -745,7 +767,8 @@ fieldset.grupo-cliente legend {
 
 .estado-cancelada {
   color: white;
-  background-color: #dc3545; /* rojo */
+  background-color: #dc3545;
+  /* rojo */
   font-weight: bold;
   padding: 3px 8px;
   border-radius: 4px;
@@ -851,6 +874,7 @@ fieldset.grupo-cliente legend {
 .only-print {
   display: none;
 }
+
 @media print {
   .only-print {
     display: block;
@@ -866,8 +890,15 @@ fieldset.grupo-cliente legend {
 }
 
 @keyframes fadeInModal {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* _____________________________________________________________________________*/
@@ -1060,6 +1091,7 @@ fieldset.grupo-cliente legend {
 #contenidoHistorial {
   opacity: 1;
 }
+
 /* _____________________________________________________________________________*/
 
 /* ======== ESTILOS DE LA INTERFAZ DE PROVEEDORES ======== */
@@ -1097,7 +1129,7 @@ h3 {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1108,7 +1140,7 @@ h3 {
 .btn-guardar-compra:hover {
   background-color: var(--color-primario-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Tabla de proveedores */
@@ -1196,8 +1228,10 @@ h3 {
 .modal {
   display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.6);
   justify-content: center;
   align-items: center;
@@ -1218,8 +1252,15 @@ h3 {
 }
 
 @keyframes modalFadeIn {
-  from {opacity: 0; transform: translateY(-20px);}
-  to {opacity: 1; transform: translateY(0);}
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-contenido.grande {
@@ -1228,7 +1269,8 @@ h3 {
 
 .cerrar-modal {
   position: absolute;
-  top: 15px; right: 20px;
+  top: 15px;
+  right: 20px;
   font-size: 1.8rem;
   cursor: pointer;
   color: var(--color-texto-claro);
@@ -1423,9 +1465,10 @@ h3 {
   font-family: 'Segoe UI', 'Arial', sans-serif;
   overflow: auto;
 }
+
 .modal-content {
-  max-height: 90vh; 
-  overflow-y: auto; 
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .close {
@@ -1553,31 +1596,41 @@ h3 {
   text-align: center;
   padding: 30px 20px;
 }
+
 /* Animación para el modal */
 @keyframes modalFadeIn {
-  from {opacity: 0; transform: translateY(-20px);}
-  to {opacity: 1; transform: translateY(0);}
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 /* Media queries para responsive */
 @media (max-width: 768px) {
   .acciones-proveedor {
     flex-direction: column;
     gap: 0.8rem;
   }
-  
+
   #buscadorProveedores {
     width: 100%;
   }
-  
+
   .tabla-proveedores {
     overflow-x: auto;
     display: block;
   }
-  
+
   #tablaHistorialCompras {
     grid-template-columns: 1fr;
   }
 }
+
 .btn-imprimir {
   background-color: #bdbaba;
   border-radius: 5px;
@@ -1586,6 +1639,7 @@ h3 {
   border: none;
   padding: 12px 25px;
 }
+
 /* _____________________________________________________________________________*/
 
 /* ======== ESTILOS DE REPORTES ======== */
@@ -1810,7 +1864,8 @@ canvas {
   font-size: 14px;
 }
 
-.tabla-empleados th, .tabla-empleados td {
+.tabla-empleados th,
+.tabla-empleados td {
   padding: 14px 16px;
   font-size: 14px;
 }
@@ -1865,8 +1920,8 @@ canvas {
     grid-template-columns: 1fr;
   }
 
-  .formulario-alta, .tabla-empleados {
+  .formulario-alta,
+  .tabla-empleados {
     width: 100%;
   }
 }
-
