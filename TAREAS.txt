@@ -1,13 +1,1 @@
-******************** INICIO DE SESION *************************
-2.- Hacer que solo el Administrador pueda editar, eliminar productos, el cajero no lo hara
-3.- Hacer que el historial de ventas solo lo pueda ver el administrador y no el cajero
-
-******************* PRODUCTOS.HTML ****************************
-1.- Falta activar o conectar el boton de editar ✏️ los productos, Dayan: Ya los edita
-2.- Tambien que el stock vaya cambiado dependiendo a las ventas que hayan hecho
-3.- Corregir las imagenes y anadirlas para que ya se vea bonito
-
-************************ VENTAS.HTML **************************
-2.- Tambien tenia pensando que cuando se quiera registrar un cliente y este ya se encuentre en la base de datos
-    que recupere sus datos.
 
