@@ -1,40 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>PINCHES HAMBURGUESAS - Login</title>
-    <link rel="stylesheet" href="css/login.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEETFIT - Login</title>
+  <link rel="stylesheet" href="css/login.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="js/api.js"></script>
+  <script src="js/login.js"></script>
 </head>
-<body>
-    <div class="login-container">
-      
-      <!-- LOGO a la izquierda -->
-      <div class="logo-side">
-        <img src="img/pinchesHamburguesas.png" alt="Logo Sweetfit" class="logo-imgsweet" />
+
+<body class="pagina-login">
+
+  <!-- LOGO a la izquierda -->
+  <div class="logo-side">
+    <img src="img/sweetfit.png" alt="Logo Sweetfit" class="logo-imgsweet" />
+  </div>
+
+  <!-- FORMULARIO -->
+  <div class="wrapper-login">
+    <form id="loginForm" class="form">
+      <h1 class="title-login">Inicio</h1>
+
+      <div class="inp">
+        <input type="email" name="email" placeholder="Usuario">
       </div>
-  
-      <!-- FORMULARIO -->
-      <div class="wrapper-login">
-        <form id="loginForm" class="form">
-          <h1 class="title-login">Inicio</h1>
-          
-          <div class="inp">
-            <input type="email" name="email" placeholder="Usuario">
-          </div>
-          <div class="inp">
-            <input type="password" name="contraseña" placeholder="Contraseña">
-          </div>
-          <button class="submit">Iniciar Sesión</button>
-        </form>
+      <div class="inp">
+        <input type="password" name="contraseña" placeholder="Contraseña">
       </div>
-  
-    </div>
-    <script src="js/script.js"></script>
-    <script>
-      initLogin();
-    </script>
-  </body>
-  
+      <button class="submit">Iniciar Sesión</button>
+    </form>
+  </div>
+
+  </div>
+</body>
+
 </html>

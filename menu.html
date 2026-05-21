@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sweetfit — Menú Digital</title>
+  <meta name="description" content="Explora el menú de Sweetfit. Hamburguesas, hot dogs, postres y más. Haz tu pedido en línea." />
+  <link rel="stylesheet" href="css/menu.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css" />
+</head>
+<body>
+
+  <!-- ══ HEADER ══ -->
+  <header class="menu-header">
+    <div class="logo-area">
+      <img src="img/sweetfit.png" alt="Logo Sweetfit" />
+      <div>
+        <h1>Sweetfit</h1>
+        <p>Menú Digital</p>
+      </div>
+    </div>
+    <button class="btn-carrito" id="btnAbrirCarrito">
+      <i class="fi fi-br-shopping-cart"></i>
+      Mi Pedido
+      <span class="carrito-badge" id="carritoContador">0</span>
+    </button>
+  </header>
+
+  <!-- ══ FILTROS DE CATEGORÍA ══ -->
+  <nav class="filtros-wrapper" id="filtrosCategorias">
+    <button class="filtro-cat activo" data-cat="todos" id="filtro-todos">🍽️ Todo el Menú</button>
+    <!-- Botones de categoría se insertan dinámicamente -->
+  </nav>
+
+  <!-- ══ PRODUCTOS ══ -->
+  <main class="menu-content" id="menuContent">
+    <p id="cargandoMsg" style="text-align:center; color:#888; padding: 60px 0;">
+      Cargando el menú... 🍔
+    </p>
+  </main>
+
+  <!-- ══ OVERLAY CARRITO ══ -->
+  <div class="carrito-overlay" id="carritoOverlay"></div>
+
+  <!-- ══ PANEL CARRITO ══ -->
+  <aside class="carrito-panel" id="carritoPanel">
+    <div class="carrito-header">
+      <h2>🛒 Mi Pedido</h2>
+      <button class="btn-cerrar-carrito" id="btnCerrarCarrito">×</button>
+    </div>
+    <div class="carrito-items" id="carritoItems">
+      <div class="carrito-vacio">
+        <span>🛒</span>
+        <p>Tu carrito está vacío.</p>
+        <p style="font-size:0.85rem; margin-top:6px;">¡Agrega algo del menú!</p>
+      </div>
+    </div>
+    <div class="carrito-footer">
+      <div class="carrito-total">
+        <span>Total</span>
+        <span id="carritoTotal">$0.00</span>
+      </div>
+      <button class="btn-confirmar-pedido" id="btnConfirmarPedido">
+        ✅ Confirmar Pedido
+      </button>
+      <button class="btn-vaciar-carrito" id="btnVaciarCarrito">🗑️ Vaciar carrito</button>
+    </div>
+  </aside>
+
+  <!-- ══ MODAL DATOS DEL CLIENTE ══ -->
+  <div class="modal-pedido" id="modalPedido">
+    <div class="modal-pedido-contenido">
+      <h2>📋 Datos de tu Pedido</h2>
+      <p>Completa la información para confirmar tu pedido.</p>
+      <form class="form-pedido" id="formPedido">
+        <div>
+          <label for="pedidoNombre">Nombre</label>
+          <input type="text" id="pedidoNombre" placeholder="Tu nombre completo" required />
+        </div>
+        <div>
+          <label for="pedidoTelefono">Teléfono</label>
+          <input type="tel" id="pedidoTelefono" placeholder="ej: 2291234567" required />
+        </div>
+        <div>
+          <label for="pedidoTipo">Tipo de pedido</label>
+          <select id="pedidoTipo">
+            <option value="Local">🪑 Para comer aquí (Local)</option>
+            <option value="Domicilio">🛵 A domicilio</option>
+            <option value="App">📱 Para llevar</option>
+          </select>
+        </div>
+        <div>
+          <label for="pedidoNotas">Notas / Alergias (opcional)</label>
+          <textarea id="pedidoNotas" placeholder="Sin cebolla, extra salsa, etc."></textarea>
+        </div>
+
+        <div class="resumen-pedido" id="resumenModal">
+          <!-- Resumen del carrito se inyecta aquí -->
+        </div>
+
+        <div class="form-pedido-btns">
+          <button type="button" class="btn-cancelar-pedido" id="btnCancelarModal">Cancelar</button>
+          <button type="submit" class="btn-enviar-pedido" id="btnEnviarPedido">
+            🚀 Enviar Pedido
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/menu.js"></script>
+</body>
+</html>

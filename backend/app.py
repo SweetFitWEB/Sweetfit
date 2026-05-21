@@ -5,9 +5,10 @@ import os
 from datetime import datetime, date, timedelta 
 import re
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 # Carpeta absoluta para guardar imágenes subidas
 UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
@@ -63,6 +64,90 @@ def dashboard():
         'ultima_compra': ultima_compra
     })
 
+# ESTOS ENDPOINTS PERTENECEN AL MENÚ DIGITAL PÚBLICO___________________________________________________
+
+@app.route('/api/menu', methods=['GET'])
+def obtener_menu_publico():
+    """Devuelve productos aprobados con stock para el menú digital público."""
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT ID_PRODUCTO, NOMBRE, DESCRIPCION, PRECIO, CATEGORIA, IMAGEN, CANTIDAD
+            FROM producto
+            WHERE ESTADO_APROBACION = 'APROBADO' AND CANTIDAD > 0
+            ORDER BY CATEGORIA, NOMBRE
+        """)
+        productos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        # Agrupar por categoría
+        menu = {}
+        for p in productos:
+            cat = p['CATEGORIA'] or 'General'
+            if cat not in menu:
+                menu[cat] = []
+            p['PRECIO'] = float(p['PRECIO']) if p['PRECIO'] else 0
+            menu[cat].append(p)
+        return jsonify(menu)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/pedidos', methods=['POST', 'OPTIONS'])
+def crear_pedido_online():
+    """Registra un pedido online como venta EN ESPERA."""
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        data = request.json
+        nombre_cliente = data.get('nombre', 'Cliente Web')
+        telefono = data.get('telefono', '')
+        tipo = data.get('tipo_pedido', 'App')  # Local, Domicilio, App
+        notas = data.get('notas', '')
+        items = data.get('items', [])
+
+        if not items:
+            return jsonify({'error': 'El carrito está vacío'}), 400
+
+        total = sum(float(i['precio']) * int(i['cantidad']) for i in items)
+
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+
+        # Insertar venta
+        cursor.execute("""
+            INSERT INTO venta (TIPO_VENTA, TOTAL_VENTA, ESTADO, ID_CLIENTE, ID_EMPLEADO)
+            VALUES (%s, %s, 'EN ESPERA', NULL, NULL)
+        """, (tipo, total))
+        id_venta = cursor.lastrowid
+
+        # Insertar detalle_venta
+        for item in items:
+            cursor.execute("""
+                INSERT INTO detalle_venta (ID_VENTA, ID_PRODUCTO, CANTIDAD_VENTA, SUBTOTAL_VENTA)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                id_venta,
+                item['id_producto'],
+                item['cantidad'],
+                float(item['precio']) * int(item['cantidad'])
+            ))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'mensaje': 'Pedido registrado exitosamente',
+            'id_pedido': id_venta,
+            'total': total,
+            'nombre_cliente': nombre_cliente,
+            'telefono': telefono,
+            'notas': notas
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ESTOS ENDPOINTS PERTENECEN A PRODUCTOS.HTML Y VENTAS.HTML___________________________________________________
 
 # Ruta para obtener todos los productos
@@ -77,7 +162,7 @@ def obtener_productos():
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
 
-        filtros = []
+        filtros = ["ESTADO_APROBACION = 'APROBADO'"]
         valores = []
 
         if categoria:
@@ -141,23 +226,48 @@ def obtener_productos():
 def login_page():
     return send_from_directory('.', 'login.html')
 
+# Ruta para servir archivos HTML del directorio views
+@app.route('/views/<path:filename>')
+def serve_views(filename):
+    return send_from_directory('../views', filename)
+
 #Ruta del login
-@app.route('/api/login', methods=['POST'])
+@app.route('/api/login', methods=['POST', 'OPTIONS'])
 def login():
+    # Handle preflight request
+    if request.method == 'OPTIONS':
+        return '', 200
     data = request.json  
+    print(f"DEBUG: Request data received = {data}")
     email = data.get('email')
-    contraseña = data.get('contraseña')
+    contraseña = data.get('contraseña') or data.get('password')
+    print(f"DEBUG: Extracted - Email: {email}, Contraseña: {contraseña}")
 
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
-        query = "SELECT * FROM empleado WHERE EMAIL = %s AND CONTRASEÑA = %s"
-        cursor.execute(query, (email, contraseña))
+        cursor.execute("SELECT * FROM empleado WHERE EMAIL = %s", (email,))
         user = cursor.fetchone()
+
+        if user:
+            stored = user["CONTRASEÑA"]
+            if stored.startswith("pbkdf2:") or stored.startswith("scrypt:") or stored.startswith("$2"):
+                valida = check_password_hash(stored, contraseña)
+            else:
+                valida = (stored == contraseña)
+                if valida:
+                    cursor.execute(
+                        "UPDATE empleado SET CONTRASEÑA = %s WHERE ID_EMPLEADO = %s",
+                        (generate_password_hash(contraseña), user["ID_EMPLEADO"])
+                    )
+                    conn.commit()
+        else:
+            valida = False
+
         cursor.close()
         conn.close()
 
-        if user:
+        if user and valida:
             return jsonify({
         "mensaje": "Login exitoso",
         "usuario": {
@@ -193,6 +303,8 @@ def obtener_categorias():
 # Ruta para agregar producto con imagen
 @app.route('/api/productos', methods=['POST'])
 def agregar_producto():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         nombre = request.form.get('nombre')
         descripcion = request.form.get('descripcion')
@@ -230,6 +342,8 @@ def servir_imagen(filename):
 # Eliminar producto
 @app.route('/api/eliminar_producto/<int:id_producto>', methods=['DELETE'])
 def eliminar_producto(id_producto):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -249,6 +363,8 @@ def eliminar_producto(id_producto):
 # Editar producto (actualizar imagen)
 @app.route('/api/editar_producto/<int:id_producto>', methods=['GET', 'POST'])
 def editar_producto(id_producto):
+    if request.method == 'POST' and request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     if request.method == 'GET':
         try:
             conn = mysql.connector.connect(**db_config)
@@ -388,6 +504,8 @@ def obtener_ventas():
 
 @app.route('/api/ventas', methods=['POST'])
 def registrar_venta():
+    if request.headers.get('X-User-Role') not in ('Administrador', 'Cajero'):
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         data = request.get_json()
 
@@ -474,7 +592,7 @@ def registrar_venta():
         ))
         id_venta = cursor.lastrowid
 
-        # 5. Insertar productos en detalle_venta
+        # 5. Insertar productos en detalle_venta y descontar stock
         for producto in carrito:
             query_detalle = """
                 INSERT INTO detalle_venta (SUBTOTAL_VENTA, CANTIDAD_VENTA, ID_VENTA, ID_PRODUCTO)
@@ -486,6 +604,11 @@ def registrar_venta():
                 id_venta,
                 producto["id"]
             ))
+
+            cursor.execute(
+                "UPDATE producto SET CANTIDAD = CANTIDAD - %s WHERE ID_PRODUCTO = %s",
+                (producto["cantidad"], producto["id"])
+            )
 
         conn.commit()
         cursor.close()
@@ -500,6 +623,8 @@ def registrar_venta():
 
 @app.route('/api/ventas/<int:id_venta>', methods=['PUT'])
 def actualizar_venta_completa(id_venta):
+    if request.headers.get('X-User-Role') not in ('Administrador', 'Cajero'):
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         data = request.get_json()
 
@@ -620,7 +745,7 @@ def obtener_detalles_venta(id_venta):
                    c.TELEFONO AS cliente_telefono,
                    e.NOMBRE AS empleado_nombre, e.APELLIDOS AS empleado_apellidos
             FROM venta v
-            JOIN cliente c ON v.ID_CLIENTE = c.ID_CLIENTE
+            LEFT JOIN cliente c ON v.ID_CLIENTE = c.ID_CLIENTE
             LEFT JOIN empleado e ON v.ID_EMPLEADO = e.ID_EMPLEADO
             WHERE v.ID_VENTA = %s
         """
@@ -662,6 +787,7 @@ def obtener_detalles_venta(id_venta):
         # Estructura de respuesta
         response = {
             "orden": venta["ID_VENTA"],
+            "id_cliente": venta.get("ID_CLIENTE"),
             "cliente": cliente_nombre_completo,
             "empleado": empleado_nombre_completo,
             "fecha": fecha_iso,
@@ -688,6 +814,8 @@ def obtener_detalles_venta(id_venta):
 # Obtener historial de ventas con filtros
 @app.route('/api/ventas/historial', methods=['GET'])
 def historial_ventas():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado: solo administradores'}), 403
     try:
         fecha_inicio = request.args.get('fecha_inicio')
         fecha_fin = request.args.get('fecha_fin')
@@ -732,53 +860,7 @@ def historial_ventas():
     except mysql.connector.Error as err:
         return jsonify({'error': str(err)}), 500
 
-#Ruta para info del ticket venta
-@app.route('/api/ventas/<int:id_venta>', methods=['GET'])
-def  detalle_venta(id_venta):
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor(dictionary = True)
-        query_venta= """
-        SELECT V.ID_VENTA AS ORDEN_VENTA, V.FECHA_VENTA, CONCAT(C.NOMBRE, ' ', C.APELLIDO_PATERNO, ' ', C.APELLIDO_MATERNO) AS 'NOMBRE_CLIENTE',
-        E.NOMBRE AS 'NOMBRE_EMPLEADO'
-        FROM venta V
-        LEFT JOIN cliente C ON V.ID_CLIENTE = C.ID_CLIENTE
-        JOIN empleado E ON V.ID_EMPLEADO = E.ID_EMPLEADO
-        WHERE V.ID_VENTA = %s;
-        """ 
-        cursor.execute(query_venta, (id_venta,))
-        venta = cursor.fetchone()
-        if not venta :
-            return jsonify({'error': 'Venta no encontrada'}), 404
-        
-        orden_venta = venta['ORDEN_VENTA']
-        fecha_venta = venta['FECHA_VENTA'].strftime("%Y-%m-%dT%H:%M:%S")
-        nombre_cliente = venta['NOMBRE_CLIENTE'] or "General"
-        nombre_empleado = venta['NOMBRE_EMPLEADO']
 
-        query_detallesV ="""
-        SELECT DV.CANTIDAD_VENTA, PR.NOMBRE AS PRODUCTO, PR.PRECIO AS 'PRECIO_UNITARIO', DV.SUBTOTAL_VENTA
-        FROM detalle_venta DV
-        JOIN producto PR ON DV.ID_PRODUCTO = PR.ID_PRODUCTO
-        WHERE DV.ID_VENTA = %s;
-        """ 
-        cursor.execute(query_detallesV, (id_venta,))
-        detallesV = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return jsonify({
-            'orden': orden_venta,
-            'fecha': fecha_venta,
-            'cliente': nombre_cliente,
-            'empleado': nombre_empleado,
-            'detallesV': detallesV
-        })
-
-    except mysql.connector.Error as err:
-        print("Error al consultar detalles de la venta:", err)
-        return jsonify({'error': str(err)}), 500
-    
-    
 @app.route('/api/cliente', methods=['GET'])
 def buscar_cliente():
     nombre_query = request.args.get('nombre', '').strip()
@@ -844,6 +926,8 @@ def agregar_cliente():
 # Ruta para eliminar clientes
 @app.route('/api/clientes/<int:id_cliente>', methods=['DELETE'])
 def eliminar_cliente(id_cliente):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -856,6 +940,30 @@ def eliminar_cliente(id_cliente):
     except mysql.connector.Error as err:
         return jsonify({'success': False, 'error': str(err)}), 500
     
+# Ruta para actualizar cliente
+@app.route('/api/clientes/<int:id_cliente>', methods=['PUT'])
+def actualizar_cliente(id_cliente):
+    try:
+        data = request.json
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        query = """
+            UPDATE cliente 
+            SET NOMBRE = %s, APELLIDO_PATERNO = %s, APELLIDO_MATERNO = %s, 
+                DIRECCION = %s, TELEFONO = %s 
+            WHERE ID_CLIENTE = %s
+        """
+        cursor.execute(query, (
+            data.get('nombre'), data.get('apellido_paterno'), data.get('apellido_materno'),
+            data.get('direccion'), data.get('telefono'), id_cliente
+        ))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({'success': True})
+    except mysql.connector.Error as err:
+        return jsonify({'success': False, 'error': str(err)}), 500
+
 # Ruta para obtener el historial de venntas por cada cliente
 @app.route('/api/clientes/<int:id_cliente>/historial', methods=['GET'])
 def obtener_historial_compras(id_cliente):
@@ -873,10 +981,7 @@ def obtener_historial_compras(id_cliente):
         cursor.close()
         conn.close()
         
-        if historial:
-            return jsonify(historial)
-        else:
-            return jsonify({'message': 'No se encontraron ventas para este cliente.'}), 404
+        return jsonify(historial if historial else [])
     except mysql.connector.Error as err:
         return jsonify({'error': str(err)}), 500
 # __________________________________________________________________________________________________________________________________
@@ -929,6 +1034,8 @@ def obtener_productoproveedor(id_proveedor):
 # Agregar proveedor
 @app.route('/api/proveedores', methods=['POST'])
 def agregar_proveedor():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         data = request.json
         nombre = data.get('nombre')
@@ -950,6 +1057,8 @@ def agregar_proveedor():
 #EliminarProveedor
 @app.route('/api/proveedores/<int:id_proveedor>', methods=['DELETE'])
 def eliminar_proveedor(id_proveedor):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -966,6 +1075,8 @@ def eliminar_proveedor(id_proveedor):
 #Editar Proveedor
 @app.route('/api/proveedores/<int:id_proveedor>', methods=['PUT'])
 def actualizar_proveedor(id_proveedor):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         data = request.json
         nombre =data.get('nombre')
@@ -991,6 +1102,8 @@ def actualizar_proveedor(id_proveedor):
 # Registrar una compra
 @app.route('/api/compras', methods=['POST'])
 def registrar_compra():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         data = request.json
         proveedor_id = data.get('proveedor')
@@ -1026,9 +1139,9 @@ def registrar_compra():
 
             # Actualizar inventario
 
-#            cursor.execute("""
-#                UPDATE producto SET CANTIDAD = CANTIDAD + %s WHERE ID_PRODUCTO = %s
-#           """, (cantidad, id_producto))
+            cursor.execute("""
+                UPDATE producto SET CANTIDAD = CANTIDAD + %s WHERE ID_PRODUCTO = %s
+           """, (cantidad, id_producto))
 
         # Actualizar total final
         cursor.execute("UPDATE compra SET TOTAL_COMPRA = %s WHERE ID_COMPRA = %s", (total, id_compra))
@@ -1300,6 +1413,33 @@ def obtener_categorias_mas_vendidas():
         return jsonify({'error': str(err)}), 500
     
 
+@app.route('/api/reportes/productos-mas-vendidos', methods=['GET'])
+def productos_mas_vendidos():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT p.NOMBRE AS nombre,
+                   SUM(dv.CANTIDAD_VENTA) AS total_vendido,
+                   SUM(dv.SUBTOTAL_VENTA) AS total_ingresos
+            FROM detalle_venta dv
+            JOIN producto p ON dv.ID_PRODUCTO = p.ID_PRODUCTO
+            JOIN venta v ON dv.ID_VENTA = v.ID_VENTA
+            WHERE v.ESTADO = 'FINALIZADA'
+            GROUP BY p.ID_PRODUCTO
+            ORDER BY total_vendido DESC
+            LIMIT 10
+        """
+        cursor.execute(query)
+        productos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(productos)
+    except mysql.connector.Error as err:
+        print("ERROR MYSQL:", err)
+        return jsonify({'error': str(err)}), 500
+
+
 @app.route('/api/reportes/detalles', methods=['GET'])
 def obtener_reporte_completo():
     tipo = request.args.get('tipo')
@@ -1390,6 +1530,61 @@ def obtener_reporte_completo():
         return jsonify({'error': str(err)}), 500
 
 
+# CIERRE DE CAJA __________________________________________________________________________________________________________________________
+@app.route('/api/cierre-caja', methods=['GET'])
+def cierre_caja():
+    if request.headers.get('X-User-Role') not in ('Administrador', 'Cajero'):
+        return jsonify({'error': 'Acceso denegado'}), 403
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        hoy = date.today()
+
+        cursor.execute("""
+            SELECT COUNT(*) AS total_ventas, IFNULL(SUM(TOTAL_VENTA), 0) AS total_ingresos
+            FROM venta WHERE DATE(FECHA_VENTA) = %s AND ESTADO = 'FINALIZADA'
+        """, (hoy,))
+        resumen = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT TIPO_VENTA, COUNT(*) AS cantidad, SUM(TOTAL_VENTA) AS total
+            FROM venta WHERE DATE(FECHA_VENTA) = %s AND ESTADO = 'FINALIZADA'
+            GROUP BY TIPO_VENTA
+        """, (hoy,))
+        desglose = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT p.NOMBRE, SUM(dv.CANTIDAD_VENTA) AS vendido
+            FROM detalle_venta dv
+            JOIN producto p ON dv.ID_PRODUCTO = p.ID_PRODUCTO
+            JOIN venta v ON dv.ID_VENTA = v.ID_VENTA
+            WHERE DATE(v.FECHA_VENTA) = %s AND v.ESTADO = 'FINALIZADA'
+            GROUP BY p.ID_PRODUCTO
+            ORDER BY vendido DESC LIMIT 5
+        """, (hoy,))
+        mas_vendidos = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT COUNT(*) AS pendientes FROM venta
+            WHERE DATE(FECHA_VENTA) = %s AND ESTADO = 'EN ESPERA'
+        """, (hoy,))
+        pendientes = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'fecha': hoy.isoformat(),
+            'total_ventas': resumen['total_ventas'],
+            'total_ingresos': float(resumen['total_ingresos']),
+            'desglose_por_tipo': desglose,
+            'productos_mas_vendidos': mas_vendidos,
+            'pedidos_pendientes': pendientes['pendientes']
+        })
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
+
 # ESTO ENDPOINT  PERTENECE A LA CARGA DE empleadoS DE VENTAS__________________________________________________________________________________________
 @app.route('/api/empleados', methods=['GET'])
 def obtener_empleados():
@@ -1420,6 +1615,8 @@ def mostrar_empleados():
 # Endpoint para agregar un nuevo empleado
 @app.route('/empleados', methods=['POST'])
 def agregar_empleado():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     data = request.json
     nombre = data.get('nombre')
     apellidos = data.get('apellidos')
@@ -1436,7 +1633,7 @@ def agregar_empleado():
     # Insertar nuevo empleado
     sql = "INSERT INTO empleado (NOMBRE, APELLIDOS, EMAIL, CONTRASEÑA, PUESTO, ID_EMPLEADO) VALUES (%s, %s, %s, %s, %s, NULL)"
     try:
-        cursor.execute(sql, (nombre, apellidos, email, contraseña, puesto))
+        cursor.execute(sql, (nombre, apellidos, email, generate_password_hash(contraseña), puesto))
         conn.commit()
     except mysql.connector.Error as err:
         cursor.close()
@@ -1450,13 +1647,15 @@ def agregar_empleado():
 
 @app.route('/empleados/<int:id>', methods=['PUT'])
 def actualizar_empleado(id):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     data = request.json
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
     try:
         if data.get('password'):
             sql = """UPDATE empleado SET NOMBRE=%s, APELLIDOS=%s, EMAIL=%s, CONTRASEÑA=%s, PUESTO=%s WHERE ID_EMPLEADO=%s"""
-            cursor.execute(sql, (data['nombre'], data['apellidos'], data['email'], data['password'], data['puesto'], id))
+            cursor.execute(sql, (data['nombre'], data['apellidos'], data['email'], generate_password_hash(data['password']), data['puesto'], id))
         else:
             sql = """UPDATE empleado SET NOMBRE=%s, APELLIDOS=%s, EMAIL=%s, PUESTO=%s WHERE ID_EMPLEADO=%s"""
             cursor.execute(sql, (data['nombre'], data['apellidos'], data['email'], data['puesto'], id))
@@ -1470,6 +1669,8 @@ def actualizar_empleado(id):
 
 @app.route('/empleados/<int:id>', methods=['DELETE'])
 def eliminar_empleado(id):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
     try:
@@ -1493,6 +1694,193 @@ def test_conexion():
             return jsonify({"error": "No se pudo conectar"})
     except mysql.connector.Error as err:
         return jsonify({'error': str(err)})
+
+# ==============================================================================
+# EXTRANET ENDPOINTS (PROVEEDORES)
+# ==============================================================================
+
+@app.route('/api/extranet/login', methods=['POST', 'OPTIONS'])
+def extranet_login():
+    if request.method == 'OPTIONS':
+        return '', 200
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM proveedor WHERE EMAIL = %s", (email,))
+        prov = cursor.fetchone()
+
+        if prov:
+            stored = prov["CONTRASEÑA"]
+            if stored.startswith("pbkdf2:") or stored.startswith("scrypt:") or stored.startswith("$2"):
+                valida = check_password_hash(stored, password)
+            else:
+                valida = (stored == password)
+                if valida:
+                    cursor.execute(
+                        "UPDATE proveedor SET CONTRASEÑA = %s WHERE ID_PROVEEDOR = %s",
+                        (generate_password_hash(password), prov["ID_PROVEEDOR"])
+                    )
+                    conn.commit()
+        else:
+            valida = False
+
+        cursor.close()
+        conn.close()
+
+        if prov and valida:
+            return jsonify({
+                "mensaje": "Login exitoso",
+                "proveedor": {
+                    "id": prov["ID_PROVEEDOR"],
+                    "nombre": prov["NOMBRE"],
+                    "email": prov["EMAIL"]
+                }
+            })
+        else:
+            return jsonify({"error": "Credenciales inválidas"}), 401
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
+@app.route('/api/extranet/productos/<int:id_proveedor>', methods=['GET'])
+def extranet_obtener_productos(id_proveedor):
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        query = """
+        SELECT p.* 
+        FROM producto p
+        JOIN producto_proveedor pp ON p.ID_PRODUCTO = pp.ID_PRODUCTO
+        WHERE pp.ID_PROVEEDOR = %s
+        """
+        cursor.execute(query, (id_proveedor,))
+        productos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(productos)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/extranet/productos/<int:id_proveedor>', methods=['POST'])
+def extranet_agregar_producto(id_proveedor):
+    try:
+        data = request.json
+        nombre = data.get('nombre')
+        descripcion = data.get('descripcion', '')
+        categoria = data.get('categoria', 'Hamburguesas')
+        cantidad = data.get('cantidad', 0)
+        precio = data.get('precio', 0)
+        imagen = data.get('imagen', '')
+
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        # Insertar producto PENDIENTE
+        query_prod = """
+        INSERT INTO producto (NOMBRE, DESCRIPCION, CATEGORIA, CANTIDAD, PRECIO, IMAGEN, ESTADO_APROBACION)
+        VALUES (%s, %s, %s, %s, %s, %s, 'PENDIENTE')
+        """
+        cursor.execute(query_prod, (nombre, descripcion, categoria, cantidad, precio, imagen))
+        id_producto = cursor.lastrowid
+        
+        # Vincular a proveedor
+        query_link = "INSERT INTO producto_proveedor (ID_PRODUCTO, ID_PROVEEDOR) VALUES (%s, %s)"
+        cursor.execute(query_link, (id_producto, id_proveedor))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'id_producto': id_producto})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/extranet/productos/<int:id_producto>', methods=['PUT'])
+def extranet_editar_producto(id_producto):
+    try:
+        data = request.json
+        nombre = data.get('nombre')
+        precio = data.get('precio')
+        
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        query = "UPDATE producto SET NOMBRE = %s, PRECIO = %s WHERE ID_PRODUCTO = %s"
+        cursor.execute(query, (nombre, precio, id_producto))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/extranet/productos/<int:id_producto>/<int:id_proveedor>', methods=['DELETE'])
+def extranet_eliminar_producto(id_producto, id_proveedor):
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        query_unlink = "DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s"
+        cursor.execute(query_unlink, (id_producto, id_proveedor))
+        # Opcionalmente se podría eliminar el producto si no tiene otras ventas/proveedores
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ==============================================================================
+# APROBACIONES ADMIN
+# ==============================================================================
+
+@app.route('/api/productos/pendientes', methods=['GET'])
+def obtener_productos_pendientes():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        query = """
+        SELECT p.*, pr.NOMBRE as proveedor_nombre 
+        FROM producto p
+        LEFT JOIN producto_proveedor pp ON p.ID_PRODUCTO = pp.ID_PRODUCTO
+        LEFT JOIN proveedor pr ON pp.ID_PROVEEDOR = pr.ID_PROVEEDOR
+        WHERE p.ESTADO_APROBACION = 'PENDIENTE'
+        """
+        cursor.execute(query)
+        pendientes = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(pendientes)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/productos/<int:id_producto>/aprobar', methods=['PUT'])
+def aprobar_producto(id_producto):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
+    try:
+        data = request.json
+        estado = data.get('estado', 'APROBADO')
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        if estado == 'RECHAZADO':
+            cursor.execute("DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s", (id_producto,))
+            cursor.execute("DELETE FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
+        else:
+            cursor.execute("UPDATE producto SET ESTADO_APROBACION = %s WHERE ID_PRODUCTO = %s", (estado, id_producto))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # Ejecutar servidor
 if __name__ == '__main__':

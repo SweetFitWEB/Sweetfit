@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sweetfit - Mi Catálogo (Proveedor)</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.1.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
+  <style>
+    /* Estilos específicos para la extranet, diferenciados de la app principal */
+    body.extranet-body {
+      background-color: #f4f6f9;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .extranet-header {
+      background: #ABBF7F;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .extranet-header h1 {
+      margin: 0;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-logout:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    .extranet-content {
+      padding: 30px;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .btn-agregar {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-agregar:hover { background: #218838; }
+    
+    .grid-catalogo {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .card-producto {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    .badge-estado {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+      color: white;
+    }
+    .badge-aprobado { background-color: #28a745; }
+    .badge-pendiente { background-color: #f39c12; }
+    .badge-rechazado { background-color: #e74c3c; }
+
+    .card-producto h3 { margin: 10px 0 5px; color: #333; }
+    .card-producto p { margin: 5px 0; color: #666; }
+    .card-precio { font-size: 1.2em; font-weight: bold; color: #6B8A45; margin-bottom: 15px; }
+    
+    .card-acciones button {
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 8px;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    .card-acciones button:hover { background: #f4f6f9; }
+    
+  </style>
+</head>
+<body class="extranet-body">
+
+  <header class="extranet-header">
+    <h1><i class="fi fi-br-truck-box"></i> Sweetfit - Portal de Proveedores</h1>
+    <div class="user-info">
+      <span id="provNameLabel">Proveedor</span>
+      <button class="btn-logout" id="btnCerrarSesion">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <main class="extranet-content">
+    <div class="toolbar">
+      <h2>Mi Catálogo de Productos</h2>
+      <button class="btn-agregar" id="btnAgregarProductoExtranet"><i class="fi fi-br-plus"></i> Proponer Producto</button>
+    </div>
+    
+    <div class="grid-catalogo" id="gridCatalogo">
+      <!-- Productos cargados dinámicamente -->
+    </div>
+  </main>
+
+  <!-- Modal Producto -->
+  <div class="modal" id="modalProductoExtranet" style="display:none;">
+    <div class="modal-contenido" style="max-width: 400px;">
+      <span class="cerrar-modal" id="cerrarModalExtranet">&times;</span>
+      <h3 id="tituloModalExtranet">Añadir Producto</h3>
+      <p style="font-size:12px; color:#666;">Nota: Los productos nuevos requieren aprobación del administrador.</p>
+      <form id="formProductoExtranet">
+        <input type="hidden" id="extranetProductoId" name="id_producto" />
+        <input type="text" id="extranetNombre" name="nombre" placeholder="Nombre del Producto" required />
+        <input type="number" id="extranetPrecio" name="precio" placeholder="Precio Base" step="0.01" required />
+        
+        <!-- Estos campos solo se envían al crear uno nuevo -->
+        <div id="camposNuevoProducto" style="display: flex; flex-direction: column; gap: 1rem;">
+          <input type="text" name="descripcion" placeholder="Descripción breve" />
+          <select name="categoria">
+            <option value="Hamburguesas">Hamburguesas</option>
+            <option value="Hot Dogs">Hot Dogs</option>
+            <option value="Postres">Postres</option>
+            <option value="Bebidas">Bebidas</option>
+            <option value="Papas">Papas</option>
+          </select>
+          <input type="number" name="cantidad" placeholder="Cantidad Inicial" value="0" />
+        </div>
+        
+        <button type="submit" style="width: 100%; margin-top:15px; padding:10px; background:#6B8A45; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Guardar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/extranet.js"></script>
+</body>
+</html>

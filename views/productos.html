@@ -3,6 +3,7 @@
   <div class="acciones-header">
     <input type="text" id="buscador" placeholder="🔍 Buscar producto..." />
     <button class="btn-agregar-producto">➕ Agregar producto</button>
+    <button id="btnAprobaciones" style="background:#f39c12; color:white; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; margin-left:10px;"><i class="fi fi-br-list-check"></i> Aprobaciones</button>
   </div>
 </div>
 
@@ -49,5 +50,16 @@
 
       <button type="submit">Guardar cambios</button>
     </form>
+  </div>
+</div>
+
+<!-- Modal de Aprobaciones -->
+<div class="modal" id="modalAprobaciones">
+  <div class="modal-contenido" style="max-width: 600px;">
+    <span class="cerrar-modal" id="cerrarModalAprobaciones">&times;</span>
+    <h3>Aprobaciones Pendientes (Extranet)</h3>
+    <div id="listaAprobaciones" style="margin-top:20px; max-height: 400px; overflow-y:auto;">
+      <!-- Se cargarán los productos pendientes aquí -->
+    </div>
   </div>
 </div>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sweetfit — ¡Pedido Recibido!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --verde: #ABBF7F;
+      --verde-oscuro: #6B8A45;
+      --beige: #F5F0E8;
+      --texto: #2A2A2A;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--beige);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+    .card-confirmacion {
+      background: white;
+      border-radius: 20px;
+      padding: 50px 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(107, 138, 69, 0.2);
+    }
+    .icono-ok {
+      font-size: 5rem;
+      margin-bottom: 16px;
+      animation: bounceIn 0.6s ease;
+    }
+    @keyframes bounceIn {
+      0%   { transform: scale(0); opacity: 0; }
+      60%  { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: var(--verde-oscuro);
+      margin-bottom: 10px;
+    }
+    .subtitulo {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 28px;
+    }
+    .info-pedido {
+      background: var(--beige);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+      margin-bottom: 28px;
+      border: 1px solid #DDD8CE;
+    }
+    .info-pedido .fila {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #DDD8CE;
+      font-size: 0.9rem;
+    }
+    .info-pedido .fila:last-child { border-bottom: none; }
+    .info-pedido .fila span:first-child { color: #888; }
+    .info-pedido .fila span:last-child { font-weight: 700; color: var(--texto); }
+    .folio { color: var(--verde-oscuro); font-size: 1.1rem; }
+    .badge-tipo {
+      display: inline-block;
+      background: var(--verde);
+      color: white;
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .tiempo-estimado {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 28px;
+    }
+    .tiempo-estimado strong { color: var(--verde-oscuro); }
+    .btn-volver {
+      display: inline-block;
+      padding: 14px 32px;
+      background: var(--verde-oscuro);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .btn-volver:hover { background: var(--verde); }
+  </style>
+</head>
+<body>
+  <div class="card-confirmacion">
+    <div class="icono-ok">✅</div>
+    <h1>¡Pedido Recibido!</h1>
+    <p class="subtitulo">Tu pedido está en camino. El equipo de Sweetfit ya está preparándolo.</p>
+
+    <div class="info-pedido" id="infoPedido">
+      <!-- Se llena con JS -->
+    </div>
+
+    <p class="tiempo-estimado">
+      Tiempo estimado de preparación: <strong>15–25 minutos</strong>
+    </p>
+
+    <a href="menu.html" class="btn-volver">← Volver al Menú</a>
+  </div>
+
+  <script>
+    const pedido = JSON.parse(localStorage.getItem('sweetfit_ultimo_pedido') || '{}');
+    const info = document.getElementById('infoPedido');
+
+    const tipos = { 'Local': '🪑 Para comer aquí', 'Domicilio': '🛵 A domicilio', 'App': '📱 Para llevar' };
+
+    if (pedido.id) {
+      info.innerHTML = `
+        <div class="fila"><span>Folio de pedido</span><span class="folio">#${pedido.id}</span></div>
+        <div class="fila"><span>Cliente</span><span>${pedido.nombre || 'Cliente Web'}</span></div>
+        <div class="fila"><span>Tipo</span><span><span class="badge-tipo">${tipos[pedido.tipo] || pedido.tipo}</span></span></div>
+        <div class="fila"><span>Total</span><span>$${parseFloat(pedido.total || 0).toFixed(2)}</span></div>
+      `;
+    } else {
+      info.innerHTML = '<p style="text-align:center; color:#aaa;">Información del pedido no disponible.</p>';
+    }
+  </script>
+</body>
+</html>
