@@ -2,7 +2,7 @@
 let carrito = JSON.parse(localStorage.getItem('sweetfit_carrito') || '[]');
 let menuData = {}; // { Categoria: [productos...] }
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = window.location.origin;
 
 /* ── Inicio ── */
 document.addEventListener('DOMContentLoaded', () => {

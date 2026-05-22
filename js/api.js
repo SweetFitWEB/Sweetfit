@@ -1,5 +1,5 @@
 // Configuración centralizada de la API
-const API = "http://localhost:5000";
+const API = window.location.origin;
 
 // Helper function para hacer peticiones a la API
 async function api(endpoint, options = {}) {
