@@ -1326,8 +1326,8 @@ def obtener_ventas_reporte():
                         SUM(TOTAL_VENTA) AS total_ventas
                     FROM venta
                     WHERE DATE(FECHA_VENTA) = %s AND ESTADO = 'FINALIZADA'
-                    GROUP BY HOUR(FECHA_VENTA)
-                    ORDER BY HOUR(FECHA_VENTA)
+                    GROUP BY DATE_FORMAT(FECHA_VENTA, '%Y-%m-%d %H:00:00')
+                    ORDER BY fecha
                 """
                 cursor.execute(query, (fecha_valida,))
                 ventas = cursor.fetchall()
@@ -1391,7 +1391,7 @@ def obtener_ventas_reporte():
                         SUM(TOTAL_VENTA) AS total_ventas
                     FROM venta
                     WHERE YEAR(FECHA_VENTA) = %s AND MONTH(FECHA_VENTA) = %s AND ESTADO = 'FINALIZADA'
-                    GROUP BY anio, mes
+                    GROUP BY anio, mes, fecha
                     ORDER BY anio, mes
                 """
                 cursor.execute(query, (anio, mes))
@@ -1405,7 +1405,7 @@ def obtener_ventas_reporte():
                         SUM(TOTAL_VENTA) AS total_ventas
                     FROM venta
                     WHERE FECHA_VENTA >= CURDATE() - INTERVAL 12 MONTH AND ESTADO = 'FINALIZADA'
-                    GROUP BY anio, mes
+                    GROUP BY anio, mes, fecha
                     ORDER BY anio, mes
                 """
                 cursor.execute(query)
@@ -2120,47 +2120,6 @@ def db_explorer():
     except Exception as e:
         html += f'<p style="color:red">Error: {e}</p>'
     return f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sweetfit DB</title></head><body style="font-family:sans-serif;padding:20px">{html}</body></html>'
-
-@app.route('/db/debug')
-def db_debug():
-    html = '<h1>Debug Report Queries</h1>'
-    try:
-        conn = get_db()
-        c = conn.cursor(dictionary=True)
-        
-        # Check FECHA_VENTA column type
-        c.execute("SHOW COLUMNS FROM venta LIKE 'FECHA_VENTA'")
-        col = c.fetchone()
-        html += f'<p>FECHA_VENTA type: {col}</p>'
-        
-        # Check ESTADO column
-        c.execute("SHOW COLUMNS FROM venta LIKE 'ESTADO'")
-        col2 = c.fetchone()
-        html += f'<p>ESTADO type: {col2}</p>'
-        
-        # Test diario query with date
-        try:
-            c.execute("SELECT DATE_FORMAT(FECHA_VENTA, '%Y-%m-%d %H:00:00') AS fecha, SUM(TOTAL_VENTA) AS total_ventas FROM venta WHERE DATE(FECHA_VENTA) = '2026-05-22' AND ESTADO = 'FINALIZADA' GROUP BY HOUR(FECHA_VENTA) ORDER BY HOUR(FECHA_VENTA)")
-            html += f'<p>Diario con fecha: {c.fetchall()}</p>'
-        except Exception as e:
-            html += f'<p style="color:red">Diario con fecha error: {e}</p>'
-        
-        # Test mensual query
-        try:
-            c.execute("SELECT YEAR(FECHA_VENTA) AS anio, MONTH(FECHA_VENTA) AS mes, DATE_FORMAT(FECHA_VENTA, '%Y-%m-01') AS fecha, SUM(TOTAL_VENTA) AS total_ventas FROM venta WHERE FECHA_VENTA >= CURDATE() - INTERVAL 12 MONTH AND ESTADO = 'FINALIZADA' GROUP BY anio, mes ORDER BY anio, mes")
-            html += f'<p>Mensual: {c.fetchall()}</p>'
-        except Exception as e:
-            html += f'<p style="color:red">Mensual error: {e}</p>'
-        
-        # Show all ventas
-        c.execute("SELECT ID_VENTA, ESTADO, FECHA_VENTA, TOTAL_VENTA FROM venta ORDER BY FECHA_VENTA DESC LIMIT 10")
-        html += f'<p>Ventas: {c.fetchall()}</p>'
-        
-        c.close()
-        conn.close()
-    except Exception as e:
-        html += f'<p style="color:red">Error: {e}</p>'
-    return html
 
 # Ejecutar servidor
 if __name__ == '__main__':
