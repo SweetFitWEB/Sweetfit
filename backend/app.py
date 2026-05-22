@@ -1922,6 +1922,164 @@ def aprobar_producto(id_producto):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/db/seed')
+def db_seed():
+    from werkzeug.security import generate_password_hash
+    from datetime import datetime, timedelta
+    import random
+    seed = []
+    try:
+        conn = get_db()
+        c = conn.cursor()
+
+        for t in ['detalle_compra','detalle_venta','compra','venta','producto_proveedor','producto','proveedor','cliente','empleado']:
+            c.execute(f"DELETE FROM {t}")
+
+        c.execute("ALTER TABLE empleado MODIFY CONTRASEÑA VARCHAR(255)")
+        c.executemany("INSERT INTO empleado (ID_EMPLEADO,NOMBRE,APELLIDOS,EMAIL,CONTRASEÑA,PUESTO) VALUES (%s,%s,%s,%s,%s,%s)", [
+            (1,'Admin','Sweetfit','admin@sweetfit.com',generate_password_hash('admin123'),'Administrador'),
+            (2,'Cajero','Sweetfit','cajero@sweetfit.com',generate_password_hash('cajero123'),'Cajero'),
+            (3,'María','López García','maria@sweetfit.com',generate_password_hash('maria123'),'Cajero'),
+            (4,'Carlos','Martínez Ruiz','carlos@sweetfit.com',generate_password_hash('carlos123'),'Cajero'),
+            (5,'Ana','Hernández Cruz','ana@sweetfit.com',generate_password_hash('ana123'),'Administrador'),
+        ])
+        seed.append('5 empleados')
+
+        c.executemany("INSERT INTO proveedor (ID_PROVEEDOR,EMAIL,TELEFONO,NOMBRE,CONTRASEÑA) VALUES (%s,%s,%s,%s,%s)", [
+            (1,'contacto@greenfields.com','2291112233','Green Fields Orgánicos',generate_password_hash('12345')),
+            (2,'ventas@fitprotein.com','2292223344','Fit Protein Supply',generate_password_hash('12345')),
+            (3,'pedidos@vitalJuice.com','2293334455','Vital Juice Co.',generate_password_hash('12345')),
+            (4,'distribucion@naturalsnack.com','2294445566','Natural Snack Distribución',generate_password_hash('12345')),
+            (5,'ventas@superfoods.mx','2295556677','Superfoods México',generate_password_hash('12345')),
+            (6,'contacto@dairyfit.com','2296667788','DairyFit Lácteos',generate_password_hash('12345')),
+        ])
+        seed.append('6 proveedores')
+
+        c.executemany("INSERT INTO cliente (ID_CLIENTE,NOMBRE,APELLIDO_PATERNO,APELLIDO_MATERNO,DIRECCION,TELEFONO) VALUES (%s,%s,%s,%s,%s,%s)", [
+            (1,'Juan','Pérez','García','Calle 1 #123, Centro','2291000100'),
+            (2,'María','López','Martínez','Av. 2 #456, Reforma','2291000200'),
+            (3,'Carlos','Ramírez',None,'Blvd. 3 #789, Costa de Oro','2291000300'),
+            (4,'Ana','Torres','Mendoza','Calle 5 #234, Las Ánimas','2291000400'),
+            (5,'Luis','Fernández','Herrera','Av. 6 #567, Faros','2291000500'),
+            (6,'Sofía','García','Ríos','Calle 7 #890, Reforma','2291000600'),
+            (7,'Miguel','Álvarez','Nieto','Blvd. 8 #123, Costa Verde','2291000700'),
+            (8,'Diana','Morales','Castillo','Calle 9 #456, Centro','2291000800'),
+            (9,'Roberto','Cruz','Vega','Av. 10 #789, Las Brisas','2291000900'),
+            (10,'Laura','Jiménez','Ortega','Calle 11 #321, Reforma','2291001000'),
+        ])
+        seed.append('10 clientes')
+
+        c.executemany("INSERT INTO producto (ID_PRODUCTO,NOMBRE,DESCRIPCION,CATEGORIA,CANTIDAD,PRECIO,IMAGEN,ESTADO_APROBACION) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", [
+            (1,'Ensalada Caesar Fit','Lechuga romana, pollo grillé, crutones integrales, aderezo light','Ensaladas',25,79.00,'aderezo.jpg','APROBADO'),
+            (2,'Bowl Verde','Quinoa, espinaca, aguacate, pepino, brócoli y vinagreta de limón','Bowls',20,89.00,'aguacate.jpg','APROBADO'),
+            (3,'Pechuga Empanizada','Pechuga de pollo empanizada con avena, horneada no frita','Proteína',30,79.00,'pechuga.jpg','APROBADO'),
+            (4,'Salmón a la Plancha','Filete de salmón fresco con especias y vegetales salteados','Proteína',15,119.00,'atun.jpg','APROBADO'),
+            (5,'Barrita Proteica','Barrita de proteína vegetal, sin azúcar añadida','Snacks Fit',50,29.00,'barritas_proteicas.jpg','APROBADO'),
+            (6,'Green Smoothie','Espinaca, piña, manzana verde y jengibre','Jugos y Licuados',30,55.00,'Extra_Naranja.jpg','APROBADO'),
+            (7,'Limonada con Chía','Limonada natural con semillas de chía y stevia','Bebidas',40,35.00,'naranja_miel.jpg','APROBADO'),
+            (8,'Palomitas de Aire','Palomitas de maíz sin aceite, con sal de mar y romero','Snacks Fit',50,25.00,'palomitas_aire.jpg','APROBADO'),
+            (9,'Protein Shake','Licuado de proteína vegetal, plátano y leche de almendras','Jugos y Licuados',20,65.00,'leche_coco.jpg','APROBADO'),
+            (10,'Ensalada de Atún (Propuesta)','Ensalada de atún fresco con mezcla de verdes, pepino y jitomate cherry','Ensaladas',40,45.00,'Deli_Tuna_CH.jpg','PENDIENTE'),
+            (11,'Pack Protein Bars (Propuesta)','Pack 12 barritas proteicas sabor chocolate y vainilla','Snacks Fit',60,25.00,'barritas_proteicas.jpg','PENDIENTE'),
+            (12,'Bowl de Frutos Rojos','Açaí, frutos rojos, granola, plátano y miel de agave','Bowls',18,95.00,'aguacate.jpg','APROBADO'),
+            (13,'Wrap de Pollo Fit','Tortilla integral, pollo, espinaca, jitomate y aderezo yogurt','Ensaladas',22,69.00,'aderezo.jpg','APROBADO'),
+            (14,'Huevos Revueltos Fit','Huevos revueltos con espinaca, champiñones y pan integral','Proteína',20,59.00,'pechuga.jpg','APROBADO'),
+            (15,'Batido de Mango','Mango, leche de coco y proteína vegetal','Jugos y Licuados',25,58.00,'Extra_Naranja.jpg','APROBADO'),
+            (16,'Té Helado Natural','Té verde, limón y stevia, sin azúcar añadida','Bebidas',45,28.00,'naranja_miel.jpg','APROBADO'),
+            (17,'Almendras Especiadas','Almendras tostadas con romero y sal de mar','Snacks Fit',35,38.00,'palomitas_aire.jpg','APROBADO'),
+            (18,'Bowl Energético','Quinoa, pollo, aguacate, mango y vinagreta cítrica','Bowls',15,99.00,'aguacate.jpg','APROBADO'),
+            (19,'Tostadas de Aguacate','Pan integral, aguacate, huevo poché y microverdes','Ensaladas',20,65.00,'aderezo.jpg','APROBADO'),
+            (20,'Pechuga BBQ Light','Pechuga bañada en salsa BBQ sin azúcar, horneada','Proteína',18,85.00,'pechuga.jpg','APROBADO'),
+            (21,'Smoothie de Fresa','Fresa, plátano, leche de almendras y proteína','Jugos y Licuados',22,60.00,'leche_coco.jpg','APROBADO'),
+            (22,'Agua de Jamaica','Agua fresca de jamaica endulzada con stevia','Bebidas',50,20.00,'naranja_miel.jpg','APROBADO'),
+            (23,'Mix Frutos Secos','Nuez, almendra, cacahuate y arándano deshidratado','Snacks Fit',40,35.00,'barritas_proteicas.jpg','APROBADO'),
+            (24,'Chía Pudding','Pudín de chía con leche de coco y frutos rojos','Bowls',25,55.00,'aguacate.jpg','APROBADO'),
+            (25,'Wrap Vegetariano','Tortilla integral, hummus, verduras asadas y rúcula','Ensaladas',20,62.00,'aderezo.jpg','APROBADO'),
+        ])
+        seed.append('25 productos')
+
+        prov_prods = [
+            (1,1),(1,2),(1,8),(1,13),(1,19),(2,3),(2,4),(2,5),(2,11),(2,20),
+            (3,6),(3,7),(3,9),(3,15),(3,21),(4,10),(4,17),(4,23),(5,12),(5,18),
+            (5,24),(6,14),(6,16),(6,22),(6,25),
+        ]
+        c.executemany("INSERT INTO producto_proveedor (ID_PRODUCTO,ID_PROVEEDOR) VALUES (%s,%s)", prov_prods)
+        seed.append(f'{len(prov_prods)} relaciones producto-proveedor')
+
+        hoy = datetime.now()
+        ventas_datos = [
+            (1,1,'Local',178.00,hoy-timedelta(days=1),2,'FINALIZADA'),
+            (2,2,'Domicilio',89.00,hoy,2,'FINALIZADA'),
+            (3,3,'Local',128.00,hoy-timedelta(days=2),2,'EN ESPERA'),
+            (4,1,'App',49.00,hoy-timedelta(days=3),1,'CANCELADA'),
+            (5,2,'Local',124.00,hoy,1,'FINALIZADA'),
+            (6,4,'Local',158.00,hoy-timedelta(days=4),3,'FINALIZADA'),
+            (7,5,'Domicilio',212.00,hoy-timedelta(days=5),3,'FINALIZADA'),
+            (8,6,'Local',95.00,hoy-timedelta(days=6),2,'EN ESPERA'),
+            (9,7,'App',145.00,hoy-timedelta(days=7),1,'FINALIZADA'),
+            (10,8,'Local',67.00,hoy-timedelta(days=8),4,'FINALIZADA'),
+            (11,9,'Domicilio',234.00,hoy-timedelta(days=10),5,'FINALIZADA'),
+            (12,10,'Local',88.00,hoy-timedelta(days=12),2,'FINALIZADA'),
+            (13,3,'App',176.00,hoy-timedelta(days=14),3,'FINALIZADA'),
+            (14,5,'Local',310.00,hoy-timedelta(days=18),1,'FINALIZADA'),
+            (15,7,'Domicilio',129.00,hoy-timedelta(days=21),4,'CANCELADA'),
+        ]
+        c.executemany("INSERT INTO venta (ID_VENTA,ID_CLIENTE,TIPO_VENTA,TOTAL_VENTA,FECHA_VENTA,ID_EMPLEADO,ESTADO) VALUES (%s,%s,%s,%s,%s,%s,%s)", ventas_datos)
+        seed.append(f'{len(ventas_datos)} ventas')
+
+        dventas = [
+            (1,79.00,1,1,1),(2,89.00,1,1,2),(3,79.00,1,2,3),(4,89.00,1,3,2),
+            (5,29.00,1,3,5),(6,55.00,1,4,6),(7,79.00,1,5,1),(8,25.00,1,5,8),
+            (9,79.00,1,6,3),(10,79.00,1,6,1),(11,89.00,2,7,2),(12,35.00,2,7,7),
+            (13,28.00,1,7,16),(14,55.00,1,8,6),(15,29.00,1,8,5),(16,35.00,1,8,7),
+            (17,65.00,1,9,9),(18,79.00,1,9,1),(19,69.00,1,10,13),(20,65.00,1,11,9),
+            (21,79.00,1,11,4),(22,89.00,1,11,2),(23,55.00,1,12,24),(24,28.00,1,12,16),
+            (25,35.00,1,12,7),(26,89.00,1,13,2),(27,79.00,1,13,3),(28,119.00,1,14,4),
+            (29,79.00,1,14,20),(30,55.00,1,14,24),(31,55.00,1,14,6),(32,79.00,1,15,3),
+            (33,38.00,1,15,17),(34,28.00,1,15,22),
+        ]
+        c.executemany("INSERT INTO detalle_venta (ID_DETVENTA,SUBTOTAL_VENTA,CANTIDAD_VENTA,ID_VENTA,ID_PRODUCTO) VALUES (%s,%s,%s,%s,%s)", dventas)
+        seed.append(f'{len(dventas)} detalles de venta')
+
+        compras_datos = [
+            (1,hoy-timedelta(days=5),315.00,1,1),
+            (2,hoy-timedelta(days=2),450.00,1,2),
+            (3,hoy-timedelta(days=8),520.00,4,1),
+            (4,hoy-timedelta(days=10),380.00,4,3),
+            (5,hoy-timedelta(days=12),600.00,1,4),
+            (6,hoy-timedelta(days=15),275.00,2,5),
+            (7,hoy-timedelta(days=20),340.00,2,6),
+            (8,hoy-timedelta(days=25),490.00,4,2),
+            (9,hoy-timedelta(days=30),250.00,1,3),
+            (10,hoy-timedelta(days=35),180.00,2,4),
+        ]
+        c.executemany("INSERT INTO compra (ID_COMPRA,FECHA_COMPRA,TOTAL_COMPRA,ID_EMPLEADO,ID_PROVEEDOR) VALUES (%s,%s,%s,%s,%s)", compras_datos)
+        seed.append(f'{len(compras_datos)} compras')
+
+        dcompras = [
+            (1,450.00,10,1,1),(2,350.00,10,6,1),(3,250.00,10,5,1),(4,790.00,10,3,2),
+            (5,520.00,8,2,3),(6,380.00,5,4,3),(7,600.00,12,1,4),(8,275.00,5,9,5),
+            (9,340.00,10,16,6),(10,490.00,7,3,7),(11,250.00,5,8,8),(12,180.00,6,7,9),
+            (13,300.00,6,20,1),(14,450.00,6,12,5),
+        ]
+        c.executemany("INSERT INTO detalle_compra (ID_DETCOMPRA,SUBTOTAL_COMPRA,CANTIDAD_COMPRA,ID_PRODUCTO,ID_COMPRA) VALUES (%s,%s,%s,%s,%s)", dcompras)
+        seed.append(f'{len(dcompras)} detalles de compra')
+
+        c.execute("UPDATE producto SET CANTIDAD = CANTIDAD - 1 WHERE ID_PRODUCTO IN (1,2,3,5,6,8)")
+        c.execute("UPDATE producto SET CANTIDAD = CANTIDAD + 10 WHERE ID_PRODUCTO IN (1,3,5,6)")
+
+        conn.commit()
+        c.close()
+        conn.close()
+
+        html = '<h1>Seed completado</h1><ul>'
+        for s in seed:
+            html += f'<li>{s}</li>'
+        html += '</ul><p><b>Admin:</b> admin@sweetfit.com / admin123</p><p><b>Cajero:</b> cajero@sweetfit.com / cajero123</p><p><a href=/db>Ver BD</a></p>'
+        return html
+    except Exception as e:
+        return f'<h1>Error</h1><pre>{e}</pre>'
+
 @app.route('/db')
 def db_explorer():
     tables = ['empleado','cliente','proveedor','producto','venta','detalle_venta','compra','detalle_compra']
@@ -1948,101 +2106,6 @@ def db_explorer():
     except Exception as e:
         html += f'<p style="color:red">Error: {e}</p>'
     return f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sweetfit DB</title></head><body style="font-family:sans-serif;padding:20px">{html}</body></html>'
-
-@app.route('/db/seed')
-def db_seed():
-    from werkzeug.security import generate_password_hash
-    from datetime import datetime, timedelta
-    seed = []
-    errors = []
-    try:
-        conn = get_db()
-        c = conn.cursor()
-
-        # Limpiar tablas
-        for t in ['detalle_compra','detalle_venta','compra','venta','producto_proveedor','producto','proveedor','cliente','empleado']:
-            c.execute(f"DELETE FROM {t}")
-
-        c.execute("ALTER TABLE empleado MODIFY CONTRASEÑA VARCHAR(255)")
-        c.executemany("INSERT INTO empleado (ID_EMPLEADO,NOMBRE,APELLIDOS,EMAIL,CONTRASEÑA,PUESTO) VALUES (%s,%s,%s,%s,%s,%s)", [
-            (1,'Admin','Sweetfit','admin@sweetfit.com',generate_password_hash('admin123'),'Administrador'),
-            (2,'Cajero','Sweetfit','cajero@sweetfit.com',generate_password_hash('cajero123'),'Cajero'),
-        ])
-        seed.append('empleado (2)')
-
-        c.executemany("INSERT INTO proveedor (ID_PROVEEDOR,EMAIL,TELEFONO,NOMBRE,CONTRASEÑA) VALUES (%s,%s,%s,%s,%s)", [
-            (1,'contacto@greenfields.com','2291112233','Green Fields Orgánicos',generate_password_hash('12345')),
-            (2,'ventas@fitprotein.com','2292223344','Fit Protein Supply',generate_password_hash('12345')),
-            (3,'pedidos@vitalJuice.com','2293334455','Vital Juice Co.',generate_password_hash('12345')),
-        ])
-        seed.append('proveedor (3)')
-
-        c.executemany("INSERT INTO cliente (ID_CLIENTE,NOMBRE,APELLIDO_PATERNO,APELLIDO_MATERNO,DIRECCION,TELEFONO) VALUES (%s,%s,%s,%s,%s,%s)", [
-            (1,'Juan','Pérez','García','Calle 1 #123, Centro','2291000100'),
-            (2,'María','López','Martínez','Av. 2 #456, Reforma','2291000200'),
-            (3,'Carlos','Ramírez',None,'Blvd. 3 #789, Costa de Oro','2291000300'),
-        ])
-        seed.append('cliente (3)')
-
-        c.executemany("INSERT INTO producto (ID_PRODUCTO,NOMBRE,DESCRIPCION,CATEGORIA,CANTIDAD,PRECIO,IMAGEN,ESTADO_APROBACION) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", [
-            (1,'Ensalada Caesar Fit','Lechuga romana, pollo grillé, crutones integrales, aderezo light','Ensaladas',25,79.00,'aderezo.jpg','APROBADO'),
-            (2,'Bowl Verde','Quinoa, espinaca, aguacate, pepino, brócoli y vinagreta de limón','Bowls',20,89.00,'aguacate.jpg','APROBADO'),
-            (3,'Pechuga Empanizada','Pechuga de pollo empanizada con avena, horneada no frita','Proteína',30,79.00,'pechuga.jpg','APROBADO'),
-            (4,'Salmón a la Plancha','Filete de salmón fresco con especias y vegetales salteados','Proteína',15,119.00,'atun.jpg','APROBADO'),
-            (5,'Barrita Proteica','Barrita de proteína vegetal, sin azúcar añadida','Snacks Fit',50,29.00,'barritas_proteicas.jpg','APROBADO'),
-            (6,'Green Smoothie','Espinaca, piña, manzana verde y jengibre','Jugos y Licuados',30,55.00,'Extra_Naranja.jpg','APROBADO'),
-            (7,'Limonada con Chía','Limonada natural con semillas de chía y stevia','Bebidas',40,35.00,'naranja_miel.jpg','APROBADO'),
-            (8,'Palomitas de Aire','Palomitas de maíz sin aceite, con sal de mar y romero','Snacks Fit',50,25.00,'palomitas_aire.jpg','APROBADO'),
-            (9,'Protein Shake','Licuado de proteína vegetal, plátano y leche de almendras','Jugos y Licuados',20,65.00,'leche_coco.jpg','APROBADO'),
-            (10,'Ensalada de Atún (Propuesta)','Ensalada de atún fresco con mezcla de verdes, pepino y jitomate cherry','Ensaladas',40,45.00,'Deli_Tuna_CH.jpg','PENDIENTE'),
-            (11,'Pack Protein Bars (Propuesta)','Pack 12 barritas proteicas sabor chocolate y vainilla','Snacks Fit',60,25.00,'barritas_proteicas.jpg','PENDIENTE'),
-        ])
-        seed.append('producto (11)')
-
-        c.executemany("INSERT INTO producto_proveedor (ID_PRODUCTO,ID_PROVEEDOR) VALUES (%s,%s)", [(10,1),(11,2)])
-        seed.append('producto_proveedor (2)')
-
-        hoy = datetime.now()
-        c.executemany("INSERT INTO venta (ID_VENTA,ID_CLIENTE,TIPO_VENTA,TOTAL_VENTA,FECHA_VENTA,ID_EMPLEADO,ESTADO) VALUES (%s,%s,%s,%s,%s,%s,%s)", [
-            (1,1,'Local',178.00,hoy-timedelta(days=1),2,'FINALIZADA'),
-            (2,2,'Domicilio',89.00,hoy,2,'FINALIZADA'),
-            (3,3,'Local',128.00,hoy-timedelta(days=2),2,'EN ESPERA'),
-            (4,1,'App',49.00,hoy-timedelta(days=3),1,'CANCELADA'),
-            (5,2,'Local',124.00,hoy,1,'FINALIZADA'),
-        ])
-        seed.append('venta (5)')
-
-        c.executemany("INSERT INTO detalle_venta (ID_DETVENTA,SUBTOTAL_VENTA,CANTIDAD_VENTA,ID_VENTA,ID_PRODUCTO) VALUES (%s,%s,%s,%s,%s)", [
-            (1,79.00,1,1,1),(2,89.00,1,1,2),(3,79.00,1,2,3),(4,89.00,1,3,2),
-            (5,29.00,1,3,5),(6,55.00,1,4,6),(7,79.00,1,5,1),(8,25.00,1,5,8),
-        ])
-        seed.append('detalle_venta (8)')
-
-        c.executemany("INSERT INTO compra (ID_COMPRA,FECHA_COMPRA,TOTAL_COMPRA,ID_EMPLEADO,ID_PROVEEDOR) VALUES (%s,%s,%s,%s,%s)", [
-            (1,hoy-timedelta(days=5),315.00,1,1),
-            (2,hoy-timedelta(days=2),450.00,1,2),
-        ])
-        seed.append('compra (2)')
-
-        c.executemany("INSERT INTO detalle_compra (ID_DETCOMPRA,SUBTOTAL_COMPRA,CANTIDAD_COMPRA,ID_PRODUCTO,ID_COMPRA) VALUES (%s,%s,%s,%s,%s)", [
-            (1,450.00,10,1,1),(2,350.00,10,6,1),(3,250.00,10,5,1),(4,790.00,10,3,2),
-        ])
-        seed.append('detalle_compra (4)')
-
-        c.execute("UPDATE producto SET CANTIDAD = CANTIDAD - 1 WHERE ID_PRODUCTO IN (1,2,3,5,6,8)")
-        c.execute("UPDATE producto SET CANTIDAD = CANTIDAD + 10 WHERE ID_PRODUCTO IN (1,3,5,6)")
-
-        conn.commit()
-        c.close()
-        conn.close()
-
-        html = '<h1>Seed completado</h1><ul>'
-        for s in seed:
-            html += f'<li>{s}</li>'
-        html += '</ul><p><b>Admin:</b> admin@sweetfit.com / admin123</p><p><b>Cajero:</b> cajero@sweetfit.com / cajero123</p><p><b>Proveedor:</b> contacto@greenfields.com / 12345</p><p><a href=/db>Ver BD</a></p>'
-        return html
-    except Exception as e:
-        return f'<h1>Error</h1><pre>{e}</pre>'
 
 # Ejecutar servidor
 if __name__ == '__main__':
