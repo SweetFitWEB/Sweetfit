@@ -1912,6 +1912,33 @@ def aprobar_producto(id_producto):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/db')
+def db_explorer():
+    tables = ['empleado','cliente','proveedor','producto','venta','detalle_venta','compra','detalle_compra']
+    html = '<h1>Sweetfit - BD Explorer</h1>'
+    try:
+        conn = mysql.connector.connect(**db_config)
+        c = conn.cursor(dictionary=True)
+        for t in tables:
+            c.execute(f'SELECT * FROM {t} ORDER BY 1 DESC LIMIT 50')
+            rows = c.fetchall()
+            html += f'<h2 style="margin-top:30px">{t.upper()}</h2><table border="1" cellpadding="6" style="border-collapse:collapse;width:100%"><tr>'
+            if rows:
+                for k in rows[0]:
+                    html += f'<th style="background:#eee">{k}</th>'
+                html += '</tr>'
+                for r in rows:
+                    html += '<tr>'
+                    for v in r.values():
+                        html += f'<td>{str(v)[:60] if v else "-"}</td>'
+                    html += '</tr>'
+            html += '</table>'
+        c.close()
+        conn.close()
+    except Exception as e:
+        html += f'<p style="color:red">Error: {e}</p>'
+    return f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sweetfit DB</title></head><body style="font-family:sans-serif;padding:20px">{html}</body></html>'
+
 # Ejecutar servidor
 if __name__ == '__main__':
     app.run(debug=True)
