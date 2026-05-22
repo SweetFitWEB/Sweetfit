@@ -28,7 +28,7 @@ r = api('POST', '/api/login', {'email': 'admin@sweetfit.com', 'contraseña': 'wr
 print(f"[LOGIN FALLIDO] {'OK' if 'error' in r else 'FALLA'}")
 
 # 4. Extranet login proveedor
-r = api('POST', '/api/extranet/login', {'email': 'info@panaderialasbrisas.com', 'password': '12345'})
+r = api('POST', '/api/extranet/login', {'email': 'contacto@greenfields.com', 'password': '12345'})
 print(f"[EXTRANET LOGIN] {r.get('mensaje','ERROR')} | Proveedor: {r.get('proveedor',{}).get('nombre','?')}")
 
 # 5. Dashboard

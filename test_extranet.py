@@ -2,7 +2,7 @@ import urllib.request
 import json
 
 # Probar login y luego obtener productos
-login_data = json.dumps({"email": "info@panaderialasbrisas.com", "password": "12345"}).encode('utf-8')
+login_data = json.dumps({"email": "contacto@greenfields.com", "password": "12345"}).encode('utf-8')
 req = urllib.request.Request(
     'http://localhost:5000/api/extranet/login',
     data=login_data,

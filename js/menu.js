@@ -39,8 +39,8 @@ async function cargarMenu() {
 function construirFiltros(categorias) {
   const nav = document.getElementById('filtrosCategorias');
   const emojis = {
-    'Hamburguesas': '🍔', 'Hot Dogs': '🌭', 'Postres': '🍰',
-    'Bebidas': '🥤', 'Papas': '🍟'
+    'Ensaladas': '🥗', 'Jugos y Licuados': '🥤', 'Proteína': '🥩',
+    'Snacks Fit': '🥜', 'Bowls': '🥣', 'Bebidas': '🧋'
   };
 
   categorias.forEach(cat => {
