@@ -1922,6 +1922,18 @@ def aprobar_producto(id_producto):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/db/config')
+def db_config_view():
+    return f'''<h1>Config BD</h1>
+<pre>
+Host: {os.environ.get('DB_HOST', 'localhost')}
+Port: {os.environ.get('DB_PORT', 3306)}
+User: {os.environ.get('DB_USER', 'root')}
+Password: {os.environ.get('DB_PASSWORD', '(vacia)')}
+Database: {os.environ.get('DB_NAME', 'sweetfit')}
+</pre>
+<p>Usa estos datos en DBeaver > New Connection > MySQL</p>'''
+
 @app.route('/db/seed')
 def db_seed():
     from werkzeug.security import generate_password_hash
