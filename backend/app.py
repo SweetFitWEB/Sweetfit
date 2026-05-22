@@ -1949,6 +1949,26 @@ def db_explorer():
         html += f'<p style="color:red">Error: {e}</p>'
     return f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sweetfit DB</title></head><body style="font-family:sans-serif;padding:20px">{html}</body></html>'
 
+@app.route('/db/seed')
+def db_seed():
+    from werkzeug.security import generate_password_hash
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("ALTER TABLE empleado MODIFY CONTRASEÑA VARCHAR(255)")
+        hashes = [
+            (1, 'Admin', 'Sweetfit', 'admin@sweetfit.com', generate_password_hash('admin123'), 'Administrador'),
+            (2, 'Cajero', 'Sweetfit', 'cajero@sweetfit.com', generate_password_hash('cajero123'), 'Cajero'),
+        ]
+        for h in hashes:
+            c.execute("REPLACE INTO empleado (ID_EMPLEADO,NOMBRE,APELLIDOS,EMAIL,CONTRASEÑA,PUESTO) VALUES (%s,%s,%s,%s,%s,%s)", h)
+        conn.commit()
+        c.close()
+        conn.close()
+        return '<h1>Seed completado</h1><p>admin@sweetfit.com / admin123</p><p>cajero@sweetfit.com / cajero123</p><p><a href=/db>Ver BD</a></p>'
+    except Exception as e:
+        return f'<h1>Error</h1><pre>{e}</pre>'
+
 # Ejecutar servidor
 if __name__ == '__main__':
     app.run(debug=True)
