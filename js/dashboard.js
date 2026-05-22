@@ -18,7 +18,7 @@ async function cargarDashboard() {
     if (ultimaCompra) ultimaCompra.textContent = data.ultima_compra || 'Sin registro';
     
     // Cargar gráfico de ventas
-    cargarGraficoVentas(data.ventas_semana);
+    cargarGraficoVentas();
     
     // Cargar cierre de caja
     cargarCierreCaja();
@@ -71,24 +71,37 @@ async function cargarCierreCaja() {
   }
 }
 
-function cargarGraficoVentas(ventasData) {
+async function cargarGraficoVentas() {
   const canvas = document.getElementById("ventasChart");
-  if (!canvas) return;
+  if (!canvas || typeof Chart === 'undefined') return;
   
   const ctx = canvas.getContext('2d');
   
-  // Destruir gráfico existente si hay uno
-  if (window.ventasChart) {
+  if (window.ventasChart && typeof window.ventasChart.destroy === 'function') {
     window.ventasChart.destroy();
+  }
+  
+  let labels = [], data = [];
+  try {
+    const res = await api("/api/reportes/ventas?tipo=semanal");
+    if (res?.ventas) {
+      labels = res.ventas.map(v => {
+        const d = new Date(v.fecha);
+        return d.toLocaleDateString('es', { weekday: 'short', day: 'numeric' });
+      });
+      data = res.ventas.map(v => parseFloat(v.total_ventas) || 0);
+    }
+  } catch (e) {
+    console.warn("No se pudo cargar el gráfico", e);
   }
   
   window.ventasChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: ventasData?.map(item => item.dia) || [],
+      labels: labels,
       datasets: [{
         label: 'Ventas diarias',
-        data: ventasData?.map(item => item.total) || [],
+        data: data,
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         tension: 0.1
