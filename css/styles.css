@@ -1946,3 +1946,100 @@ canvas {
     width: 100%;
   }
 }
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+  }
+  .sidebar .text,
+  .sidebar .logo-img {
+    display: none;
+  }
+  .sidebar .menu a {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .main {
+    margin-left: 60px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .productos-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .acciones-header {
+    width: 100%;
+  }
+  .acciones-header input {
+    width: 100%;
+  }
+
+  .grid-productos {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  table {
+    font-size: 12px;
+  }
+  table th, table td {
+    padding: 4px !important;
+  }
+
+  .topbar h2 {
+    font-size: 16px;
+  }
+  .dropdown-toggle {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .ventas-contenedor {
+    flex-direction: column;
+  }
+  .formulario-venta,
+  .historial-ventas {
+    width: 100%;
+  }
+  .grid-form {
+    grid-template-columns: 1fr;
+  }
+  .grid-modal-productos {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  .reportes-header .acciones-reportes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .selectores-fecha {
+    flex-direction: column;
+  }
+  .selectores-fecha input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+  .card p {
+    font-size: 18px;
+  }
+  .sidebar {
+    width: 50px;
+  }
+  .main {
+    margin-left: 50px;
+  }
+  .grid-productos {
+    grid-template-columns: 1fr;
+  }
+  .grid-modal-productos {
+    grid-template-columns: 1fr 1fr;
+  }
+}
