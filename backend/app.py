@@ -16,6 +16,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+BASE_DIR = os.path.dirname(app.root_path)
+
 
 db_config = {
     'host': os.environ.get('DB_HOST', 'localhost'),
@@ -214,14 +216,50 @@ def obtener_productos():
         print("ERROR MYSQL:", err)
         return jsonify({'error': str(err)}), 500
 
+@app.route('/')
+def root():
+    return send_from_directory(BASE_DIR, 'login.html')
+
 @app.route('/login.html')
 def login_page():
-    return send_from_directory('.', 'login.html')
+    return send_from_directory(BASE_DIR, 'login.html')
+
+@app.route('/menu.html')
+def menu_page():
+    return send_from_directory(BASE_DIR, 'menu.html')
+
+@app.route('/extranet.html')
+def extranet_page():
+    return send_from_directory(BASE_DIR, 'extranet.html')
+
+@app.route('/extranet_login.html')
+def extranet_login_page():
+    return send_from_directory(BASE_DIR, 'extranet_login.html')
+
+@app.route('/pedido_confirmado.html')
+def pedido_confirmado_page():
+    return send_from_directory(BASE_DIR, 'pedido_confirmado.html')
+
+@app.route('/index.html')
+def index_page():
+    return send_from_directory(BASE_DIR, 'index.html')
+
+@app.route('/css/<path:filename>')
+def serve_css(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'css'), filename)
+
+@app.route('/js/<path:filename>')
+def serve_js(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'js'), filename)
+
+@app.route('/img/<path:filename>')
+def serve_img(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'img'), filename)
 
 # Ruta para servir archivos HTML del directorio views
 @app.route('/views/<path:filename>')
 def serve_views(filename):
-    return send_from_directory('../views', filename)
+    return send_from_directory(os.path.join(BASE_DIR, 'views'), filename)
 
 #Ruta del login
 @app.route('/api/login', methods=['POST', 'OPTIONS'])
