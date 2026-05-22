@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, send_from_directory
 import mysql.connector
+from mysql.connector import pooling
 from flask_cors import CORS
 import os
 from datetime import datetime, date, timedelta 
@@ -24,14 +25,23 @@ db_config = {
     'user': os.environ.get('DB_USER', 'root'),
     'password': os.environ.get('DB_PASSWORD', ''),
     'database': os.environ.get('DB_NAME', 'sweetfit'),
-    'port': int(os.environ.get('DB_PORT', 3306))
+    'port': int(os.environ.get('DB_PORT', 3306)),
+    'pool_name': 'sweetfit_pool',
+    'pool_size': 5,
+    'pool_reset_session': True
 }
+
+def get_db():
+    try:
+        return mysql.connector.connect(**db_config)
+    except pooling.PoolError:
+        return mysql.connector.connect(**db_config)
 
 # ESTOS ENDPOINTS PERTENECEN A PANEL.HTML___________________________________________________
 
 @app.route('/api/dashboard')
 def dashboard():
-    conn = mysql.connector.connect(**db_config)
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
     hoy = date.today()
@@ -64,7 +74,7 @@ def dashboard():
 def obtener_menu_publico():
     """Devuelve productos aprobados con stock para el menú digital público."""
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
             SELECT ID_PRODUCTO, NOMBRE, DESCRIPCION, PRECIO, CATEGORIA, IMAGEN, CANTIDAD
@@ -105,7 +115,7 @@ def crear_pedido_online():
 
         total = sum(float(i['precio']) * int(i['cantidad']) for i in items)
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         # Insertar venta
@@ -153,7 +163,7 @@ def obtener_productos():
         categoria = request.args.get('categoria', '')
         nombre = request.args.get('nombre', '').strip().lower()
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         filtros = ["ESTADO_APROBACION = 'APROBADO'"]
@@ -274,7 +284,7 @@ def login():
     print(f"DEBUG: Extracted - Email: {email}, Contraseña: {contraseña}")
 
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM empleado WHERE EMAIL = %s", (email,))
         user = cursor.fetchone()
@@ -319,7 +329,7 @@ def login():
 @app.route('/api/categorias', methods=['GET'])
 def obtener_categorias():
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT DISTINCT categoria FROM producto")
         categorias = cursor.fetchall()
@@ -350,7 +360,7 @@ def agregar_producto():
         ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         imagen_file.save(ruta_imagen)
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         query = """INSERT INTO producto 
                    (nombre, descripcion, categoria, cantidad, precio, imagen)
@@ -375,7 +385,7 @@ def eliminar_producto(id_producto):
     if request.headers.get('X-User-Role') != 'Administrador':
         return jsonify({'error': 'Acceso denegado'}), 403
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
 
         cursor.execute("SELECT 1 FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
@@ -397,7 +407,7 @@ def editar_producto(id_producto):
         return jsonify({'error': 'Acceso denegado'}), 403
     if request.method == 'GET':
         try:
-            conn = mysql.connector.connect(**db_config)
+            conn = get_db()
             cursor = conn.cursor(dictionary=True)
             query = """
                     SELECT ID_PRODUCTO, NOMBRE, DESCRIPCION, CATEGORIA, CANTIDAD, PRECIO, IMAGEN
@@ -441,7 +451,7 @@ def editar_producto(id_producto):
                     imagen_file.save(ruta_imagen)
                     imagen = filename
 
-            conn = mysql.connector.connect(**db_config)
+            conn = get_db()
             cursor = conn.cursor()
 
             if imagen:
@@ -478,7 +488,7 @@ def editar_producto(id_producto):
 @app.route('/api/producto/<int:id_producto>', methods=['GET'])
 def obtener_producto_por_id(id_producto):
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
         p = cursor.fetchone()
@@ -505,7 +515,7 @@ def obtener_producto_por_id(id_producto):
 @app.route('/api/ventas', methods=['GET'])
 def obtener_ventas():
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         query = """
@@ -560,7 +570,7 @@ def registrar_venta():
         if not carrito or not cliente or not empleado or not tipo_venta:
             return jsonify({"error": "Datos incompletos"}), 400
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
 
         # 1. Buscar si el cliente ya existe
@@ -676,7 +686,7 @@ def actualizar_venta_completa(id_venta):
         if nuevo_estado and nuevo_estado not in ESTADOS_VALIDOS:
             return jsonify({"error": f"Estado inválido. Debe ser uno de: {', '.join(ESTADOS_VALIDOS)}"}), 400
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         # Obtener cliente asociado
@@ -764,7 +774,7 @@ def actualizar_venta_completa(id_venta):
 @app.route('/api/ventas/<int:id_venta>', methods=['GET'])
 def obtener_detalles_venta(id_venta):
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         # Obtener info cliente, venta y empleado
@@ -852,7 +862,7 @@ def historial_ventas():
         tipo_venta = request.args.get('tipo_venta')
         id_empleado = request.args.get('empleado')
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         query = """
@@ -897,7 +907,7 @@ def buscar_cliente():
     if not nombre_query:
         return jsonify([])  # Sin nombre no buscamos nada
 
-    conn = mysql.connector.connect(**db_config)
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
     # Buscar clientes cuyo nombre empiece con lo escrito
@@ -920,7 +930,7 @@ def buscar_cliente():
 @app.route('/api/clientes', methods=['GET'])
 def obtener_clientes():
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM cliente")
         clientes = cursor.fetchall()
@@ -941,7 +951,7 @@ def agregar_cliente():
         direccion = data.get('direccion')
         telefono = data.get('telefono')
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         query = "INSERT INTO cliente (nombre, apellido_paterno, apellido_materno, direccion, telefono) VALUES (%s, %s, %s, %s, %s)"
         cursor.execute(query, (nombre, apellido_paterno, apellido_materno, direccion, telefono))
@@ -959,7 +969,7 @@ def eliminar_cliente(id_cliente):
     if request.headers.get('X-User-Role') != 'Administrador':
         return jsonify({'error': 'Acceso denegado'}), 403
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM cliente WHERE id_cliente = %s", (id_cliente,))
         conn.commit()
@@ -975,7 +985,7 @@ def eliminar_cliente(id_cliente):
 def actualizar_cliente(id_cliente):
     try:
         data = request.json
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         query = """
             UPDATE cliente 
@@ -998,7 +1008,7 @@ def actualizar_cliente(id_cliente):
 @app.route('/api/clientes/<int:id_cliente>/historial', methods=['GET'])
 def obtener_historial_compras(id_cliente):
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         query = """
@@ -1023,7 +1033,7 @@ def obtener_proveedores():
     try:
         nombre = request.args.get('nombre','').strip().lower()
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         if nombre:
             query = "SELECT * FROM proveedor WHERE LOWER(NOMBRE) LIKE %s"
@@ -1042,7 +1052,7 @@ def obtener_proveedores():
 @app.route('/api/productoproveedor/<int:id_proveedor>', methods=['GET'])
 def obtener_productoproveedor(id_proveedor):
     try: 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         query = """
         SELECT p.*, pr.NOMBRE as nombre_proveedor, pr.ID_PROVEEDOR as id_proveedor
@@ -1072,7 +1082,7 @@ def agregar_proveedor():
         email = data.get('email')
         telefono = data.get('telefono')
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         query = "INSERT INTO proveedor (NOMBRE, EMAIL, TELEFONO) VALUES (%s, %s, %s)"
         cursor.execute(query, (nombre, email, telefono))
@@ -1090,7 +1100,7 @@ def eliminar_proveedor(id_proveedor):
     if request.headers.get('X-User-Role') != 'Administrador':
         return jsonify({'error': 'Acceso denegado'}), 403
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
 
         cursor.execute("DELETE FROM proveedor WHERE ID_PROVEEDOR = %s", (id_proveedor,))
@@ -1113,7 +1123,7 @@ def actualizar_proveedor(id_proveedor):
         email = data.get('email')
         telefono = data.get('telefono')
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         query = """
                 UPDATE PROVEEDOR
@@ -1143,7 +1153,7 @@ def registrar_compra():
         if not proveedor_id or not productos or not empleado_id:
             return jsonify({'error': 'Faltan datos de proveedor, empleado o productos'}), 400
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -1190,7 +1200,7 @@ def historial_compras_proveedores():
     try:
         fecha = request.args.get('fecha')
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         query = """
@@ -1224,7 +1234,7 @@ def historial_compras_proveedores():
 @app.route('/api/compras/<int:id_compra>', methods=['GET'])
 def detalle_compra(id_compra):
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         query_compra = """
         SELECT C.FECHA_COMPRA, P.NOMBRE AS PROVEEDOR_NOMBRE, C.ID_COMPRA AS ORDEN_COMPRA, E.NOMBRE AS NOMBRE_EMPLEADO
@@ -1301,7 +1311,7 @@ def obtener_ventas_reporte():
     fecha = request.args.get('fecha', None)
 
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         if tipo == 'diario':
@@ -1417,7 +1427,7 @@ def obtener_ventas_reporte():
 @app.route('/api/reportes/categorias', methods=['GET'])
 def obtener_categorias_mas_vendidas():
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         query = """
@@ -1446,7 +1456,7 @@ def obtener_categorias_mas_vendidas():
 @app.route('/api/reportes/productos-mas-vendidos', methods=['GET'])
 def productos_mas_vendidos():
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         query = """
             SELECT p.NOMBRE AS nombre,
@@ -1507,7 +1517,7 @@ def obtener_reporte_completo():
         return jsonify({'error': 'Tipo inválido. Use diario, semanal o mensual'}), 400
 
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
         # Detalle de ventas
@@ -1566,7 +1576,7 @@ def cierre_caja():
     if request.headers.get('X-User-Role') not in ('Administrador', 'Cajero'):
         return jsonify({'error': 'Acceso denegado'}), 403
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         hoy = date.today()
 
@@ -1619,7 +1629,7 @@ def cierre_caja():
 @app.route('/api/empleados', methods=['GET'])
 def obtener_empleados():
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT ID_EMPLEADO, NOMBRE, APELLIDOS FROM empleado")
         empleados = cursor.fetchall()
@@ -1634,7 +1644,7 @@ def obtener_empleados():
 # Endpoint para mostrar todos los empleados
 @app.route('/empleados', methods=['GET'])
 def mostrar_empleados():
-    conn = mysql.connector.connect(**db_config)
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT ID_EMPLEADO, NOMBRE, APELLIDOS, EMAIL, PUESTO FROM empleado")
     empleados = cursor.fetchall()
@@ -1657,7 +1667,7 @@ def agregar_empleado():
     if not (nombre and apellidos and email and contraseña and puesto):
         return jsonify({'error': 'Faltan datos obligatorios'}), 400
 
-    conn = mysql.connector.connect(**db_config)
+    conn = get_db()
     cursor = conn.cursor()
 
     # Insertar nuevo empleado
@@ -1680,7 +1690,7 @@ def actualizar_empleado(id):
     if request.headers.get('X-User-Role') != 'Administrador':
         return jsonify({'error': 'Acceso denegado'}), 403
     data = request.json
-    conn = mysql.connector.connect(**db_config)
+    conn = get_db()
     cursor = conn.cursor()
     try:
         if data.get('password'):
@@ -1701,7 +1711,7 @@ def actualizar_empleado(id):
 def eliminar_empleado(id):
     if request.headers.get('X-User-Role') != 'Administrador':
         return jsonify({'error': 'Acceso denegado'}), 403
-    conn = mysql.connector.connect(**db_config)
+    conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM empleado WHERE ID_EMPLEADO = %s", (id,))
@@ -1717,7 +1727,7 @@ def eliminar_empleado(id):
 @app.route('/api/test')
 def test_conexion():
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         if conn.is_connected():
             return jsonify({"mensaje": "Conexión exitosa a MySQL en puerto 3306"})
         else:
@@ -1738,7 +1748,7 @@ def extranet_login():
     password = data.get('password')
 
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM proveedor WHERE EMAIL = %s", (email,))
         prov = cursor.fetchone()
@@ -1778,7 +1788,7 @@ def extranet_login():
 @app.route('/api/extranet/productos/<int:id_proveedor>', methods=['GET'])
 def extranet_obtener_productos(id_proveedor):
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         query = """
         SELECT p.* 
@@ -1805,7 +1815,7 @@ def extranet_agregar_producto(id_proveedor):
         precio = data.get('precio', 0)
         imagen = data.get('imagen', '')
 
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         
         # Insertar producto PENDIENTE
@@ -1835,7 +1845,7 @@ def extranet_editar_producto(id_producto):
         nombre = data.get('nombre')
         precio = data.get('precio')
         
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         query = "UPDATE producto SET NOMBRE = %s, PRECIO = %s WHERE ID_PRODUCTO = %s"
         cursor.execute(query, (nombre, precio, id_producto))
@@ -1850,7 +1860,7 @@ def extranet_editar_producto(id_producto):
 @app.route('/api/extranet/productos/<int:id_producto>/<int:id_proveedor>', methods=['DELETE'])
 def extranet_eliminar_producto(id_producto, id_proveedor):
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
         query_unlink = "DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s"
         cursor.execute(query_unlink, (id_producto, id_proveedor))
@@ -1871,7 +1881,7 @@ def obtener_productos_pendientes():
     if request.headers.get('X-User-Role') != 'Administrador':
         return jsonify({'error': 'Acceso denegado'}), 403
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor(dictionary=True)
         query = """
         SELECT p.*, pr.NOMBRE as proveedor_nombre 
@@ -1895,7 +1905,7 @@ def aprobar_producto(id_producto):
     try:
         data = request.json
         estado = data.get('estado', 'APROBADO')
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         cursor = conn.cursor()
 
         if estado == 'RECHAZADO':
@@ -1917,7 +1927,7 @@ def db_explorer():
     tables = ['empleado','cliente','proveedor','producto','venta','detalle_venta','compra','detalle_compra']
     html = '<h1>Sweetfit - BD Explorer</h1>'
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = get_db()
         c = conn.cursor(dictionary=True)
         for t in tables:
             c.execute(f'SELECT * FROM {t} ORDER BY 1 DESC LIMIT 50')
