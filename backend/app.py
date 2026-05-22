@@ -1932,8 +1932,10 @@ def db_seed():
         conn = get_db()
         c = conn.cursor()
 
+        c.execute("SET FOREIGN_KEY_CHECKS = 0")
         for t in ['detalle_compra','detalle_venta','compra','venta','producto_proveedor','producto','proveedor','cliente','empleado']:
             c.execute(f"DELETE FROM {t}")
+        c.execute("SET FOREIGN_KEY_CHECKS = 1")
 
         c.execute("ALTER TABLE empleado MODIFY CONTRASEÑA VARCHAR(255)")
         c.executemany("INSERT INTO empleado (ID_EMPLEADO,NOMBRE,APELLIDOS,EMAIL,CONTRASEÑA,PUESTO) VALUES (%s,%s,%s,%s,%s,%s)", [
