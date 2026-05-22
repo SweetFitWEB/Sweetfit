@@ -197,7 +197,7 @@ async function cargarHistorialVentas() {
   const params = new URLSearchParams();
   if (fechaInicio) params.append("fecha_inicio", fechaInicio);
   if (fechaFin) params.append("fecha_fin", fechaFin);
-  if (tipoVenta) params.append("tipo_venta", tipoVenta);
+  if (tipoVenta) params.append("tipo_venta", tipoVenta.charAt(0).toUpperCase() + tipoVenta.slice(1).toLowerCase());
   if (empleado) params.append("empleado", empleado);
   const qs = params.toString();
   if (qs) url += `?${qs}`;

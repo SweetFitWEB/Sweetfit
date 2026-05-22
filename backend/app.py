@@ -1127,7 +1127,7 @@ def registrar_compra():
             id_producto = prod['id']
             cantidad = prod['cantidad']
 
-            cursor.execute("SELECT PRECIO FROM `u783499980_sweetfit`.`producto` WHERE ID_PRODUCTO = %s", (id_producto,))
+            cursor.execute("SELECT PRECIO FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
             precio = cursor.fetchone()[0]
             subtotal = float(precio) * cantidad
             total += subtotal
@@ -1631,7 +1631,7 @@ def agregar_empleado():
     cursor = conn.cursor()
 
     # Insertar nuevo empleado
-    sql = "INSERT INTO empleado (NOMBRE, APELLIDOS, EMAIL, CONTRASEÑA, PUESTO, ID_EMPLEADO) VALUES (%s, %s, %s, %s, %s, NULL)"
+    sql = "INSERT INTO empleado (NOMBRE, APELLIDOS, EMAIL, CONTRASEÑA, PUESTO) VALUES (%s, %s, %s, %s, %s)"
     try:
         cursor.execute(sql, (nombre, apellidos, email, generate_password_hash(contraseña), puesto))
         conn.commit()
@@ -1689,7 +1689,7 @@ def test_conexion():
     try:
         conn = mysql.connector.connect(**db_config)
         if conn.is_connected():
-            return jsonify({"mensaje": "Conexión exitosa a MySQL en puerto 3307"})
+            return jsonify({"mensaje": "Conexión exitosa a MySQL en puerto 3306"})
         else:
             return jsonify({"error": "No se pudo conectar"})
     except mysql.connector.Error as err:
