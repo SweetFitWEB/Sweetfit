@@ -858,7 +858,28 @@ fieldset.grupo-cliente legend {
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
   margin: 0.5rem;
+}
 
+.btn-aceptarv {
+  padding: 0.6rem 0.6rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #28a745;
+  color: var(--color-blanco);
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin: 0.5rem;
+}
+
+.btn-cancelarv:hover {
+  background-color: #bd2130;
+  transform: translateY(-2px);
+}
+
+.btn-aceptarv:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
 }
 
 .btn-ticket:hover {

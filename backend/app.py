@@ -670,8 +670,8 @@ def actualizar_venta_completa(id_venta):
 
         nuevo_estado = data.get("estado", "").upper()
         tipo_venta_raw = data.get("tipo_venta") or data.get("tipoVenta") or ""
-        cliente_data = data.get("cliente", {})
-        carrito_data = data.get("carrito", [])
+        cliente_data = data.get("cliente")
+        carrito_data = data.get("carrito")
 
         ESTADOS_VALIDOS = {"FINALIZADA", "EN ESPERA", "CANCELADA"}
         TIPOS_VENTA_VALIDOS = {"Local", "Domicilio", "App"}
@@ -696,70 +696,90 @@ def actualizar_venta_completa(id_venta):
             return jsonify({"error": "Venta no encontrada"}), 404
         id_cliente = result["ID_CLIENTE"]
 
-        # Obtener detalles antiguos (productos y cantidades)
-        cursor.execute("SELECT ID_PRODUCTO, CANTIDAD_VENTA FROM detalle_venta WHERE ID_VENTA = %s", (id_venta,))
-        detalles_antiguos = cursor.fetchall()
-        cantidades_anteriores = {d["ID_PRODUCTO"]: d["CANTIDAD_VENTA"] for d in detalles_antiguos}
+        # Si no se proporciona carrito, decidimos según el nuevo estado
+        if carrito_data is None:
+            if nuevo_estado == "CANCELADA":
+                # Comportamiento original para cancelación: devolver stock y borrar detalles
+                cursor.execute("SELECT ID_PRODUCTO, CANTIDAD_VENTA FROM detalle_venta WHERE ID_VENTA = %s", (id_venta,))
+                detalles_antiguos = cursor.fetchall()
+                for detalle in detalles_antiguos:
+                    cursor.execute(
+                        "UPDATE producto SET CANTIDAD = CANTIDAD + %s WHERE ID_PRODUCTO = %s",
+                        (detalle["CANTIDAD_VENTA"], detalle["ID_PRODUCTO"])
+                    )
+                cursor.execute("UPDATE venta SET ESTADO = %s WHERE ID_VENTA = %s", (nuevo_estado, id_venta))
+                cursor.execute("DELETE FROM detalle_venta WHERE ID_VENTA = %s", (id_venta,))
+            else:
+                # Solo actualizar el estado de la venta sin tocar stock ni detalles
+                if nuevo_estado:
+                    cursor.execute("UPDATE venta SET ESTADO = %s WHERE ID_VENTA = %s", (nuevo_estado, id_venta))
+                if tipo_venta:
+                    cursor.execute("UPDATE venta SET TIPO_VENTA = %s WHERE ID_VENTA = %s", (tipo_venta, id_venta))
+        else:
+            # Comportamiento completo original
+            # Obtener detalles antiguos (productos y cantidades)
+            cursor.execute("SELECT ID_PRODUCTO, CANTIDAD_VENTA FROM detalle_venta WHERE ID_VENTA = %s", (id_venta,))
+            detalles_antiguos = cursor.fetchall()
 
-        # *** DEVOLVER STOCK ANTIGUO PRIMERO ***
-        for detalle in detalles_antiguos:
-            cursor.execute(
-                "UPDATE producto SET CANTIDAD = CANTIDAD + %s WHERE ID_PRODUCTO = %s",
-                (detalle["CANTIDAD_VENTA"], detalle["ID_PRODUCTO"])
-            )
+            # *** DEVOLVER STOCK ANTIGUO PRIMERO ***
+            for detalle in detalles_antiguos:
+                cursor.execute(
+                    "UPDATE producto SET CANTIDAD = CANTIDAD + %s WHERE ID_PRODUCTO = %s",
+                    (detalle["CANTIDAD_VENTA"], detalle["ID_PRODUCTO"])
+                )
 
-        # VALIDAR STOCK NUEVO
-        for item in carrito_data:
-            id_producto = item.get("ID_PRODUCTO") or item.get("id") or item.get("id_producto")
-            cantidad_nueva = item.get("cantidad")
+            # VALIDAR STOCK NUEVO
+            for item in carrito_data:
+                id_producto = item.get("ID_PRODUCTO") or item.get("id") or item.get("id_producto")
+                cantidad_nueva = item.get("cantidad")
 
-            if id_producto is None or cantidad_nueva is None:
-                return jsonify({"error": f"Producto con datos faltantes: {item}"}), 400
+                if id_producto is None or cantidad_nueva is None:
+                    return jsonify({"error": f"Producto con datos faltantes: {item}"}), 400
 
-            cursor.execute("SELECT CANTIDAD FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
-            producto = cursor.fetchone()
-            if not producto:
-                return jsonify({"error": f"Producto con ID {id_producto} no encontrado"}), 404
+                cursor.execute("SELECT CANTIDAD FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
+                producto = cursor.fetchone()
+                if not producto:
+                    return jsonify({"error": f"Producto con ID {id_producto} no encontrado"}), 404
 
-            stock_actual = producto["CANTIDAD"]
+                stock_actual = producto["CANTIDAD"]
 
-            if cantidad_nueva > stock_actual:
-                return jsonify({"error": f"Stock insuficiente para el producto {id_producto} (Disponible: {stock_actual}, Pedido: {cantidad_nueva})"}), 400
+                if cantidad_nueva > stock_actual:
+                    return jsonify({"error": f"Stock insuficiente para el producto {id_producto} (Disponible: {stock_actual}, Pedido: {cantidad_nueva})"}), 400
 
-        # ACTUALIZAR CLIENTE
-        if cliente_data:
-            cursor.execute("""
-                UPDATE cliente SET NOMBRE = %s, APELLIDO_PATERNO = %s, APELLIDO_MATERNO = %s,
-                DIRECCION = %s, TELEFONO = %s WHERE ID_CLIENTE = %s
-            """, (
-                cliente_data.get("nombre"),
-                cliente_data.get("apellido_paterno"),
-                cliente_data.get("apellido_materno"),
-                cliente_data.get("direccion"),
-                cliente_data.get("telefono"),
-                id_cliente
-            ))
+            # ACTUALIZAR CLIENTE
+            if cliente_data:
+                cursor.execute("""
+                    UPDATE cliente SET NOMBRE = %s, APELLIDO_PATERNO = %s, APELLIDO_MATERNO = %s,
+                    DIRECCION = %s, TELEFONO = %s WHERE ID_CLIENTE = %s
+                """, (
+                    cliente_data.get("nombre"),
+                    cliente_data.get("apellido_paterno"),
+                    cliente_data.get("apellido_materno"),
+                    cliente_data.get("direccion"),
+                    cliente_data.get("telefono"),
+                    id_cliente
+                ))
 
-        # ACTUALIZAR ESTADO Y TIPO VENTA
-        if nuevo_estado:
-            cursor.execute("UPDATE venta SET ESTADO = %s WHERE ID_VENTA = %s", (nuevo_estado, id_venta))
-        if tipo_venta:
-            cursor.execute("UPDATE venta SET TIPO_VENTA = %s WHERE ID_VENTA = %s", (tipo_venta, id_venta))
+            # ACTUALIZAR ESTADO Y TIPO VENTA
+            if nuevo_estado:
+                cursor.execute("UPDATE venta SET ESTADO = %s WHERE ID_VENTA = %s", (nuevo_estado, id_venta))
+            if tipo_venta:
+                cursor.execute("UPDATE venta SET TIPO_VENTA = %s WHERE ID_VENTA = %s", (tipo_venta, id_venta))
 
-        # ELIMINAR DETALLES ANTIGUOS (ya devolvimos stock antes)
-        cursor.execute("DELETE FROM detalle_venta WHERE ID_VENTA = %s", (id_venta,))
+            # ELIMINAR DETALLES ANTIGUOS (ya devolvimos stock antes)
+            cursor.execute("DELETE FROM detalle_venta WHERE ID_VENTA = %s", (id_venta,))
 
-        # INSERTAR NUEVOS DETALLES Y DESCONTAR STOCK
-        insert_detalle_query = """
-            INSERT INTO detalle_venta (ID_VENTA, ID_PRODUCTO, CANTIDAD_VENTA, SUBTOTAL_VENTA)
-            VALUES (%s, %s, %s, %s)
-        """
-        for item in carrito_data:
-            id_producto = item.get("ID_PRODUCTO") or item.get("id") or item.get("id_producto")
-            cantidad = item.get("cantidad")
-            subtotal = item.get("subtotal")
+            # INSERTAR NUEVOS DETALLES Y DESCONTAR STOCK
+            insert_detalle_query = """
+                INSERT INTO detalle_venta (ID_VENTA, ID_PRODUCTO, CANTIDAD_VENTA, SUBTOTAL_VENTA)
+                VALUES (%s, %s, %s, %s)
+            """
+            for item in carrito_data:
+                id_producto = item.get("ID_PRODUCTO") or item.get("id") or item.get("id_producto")
+                cantidad = item.get("cantidad")
+                subtotal = item.get("subtotal")
 
-            cursor.execute(insert_detalle_query, (id_venta, id_producto, cantidad, subtotal))
+                cursor.execute(insert_detalle_query, (id_venta, id_producto, cantidad, subtotal))
 
         conn.commit()
         cursor.close()

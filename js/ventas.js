@@ -216,7 +216,8 @@ async function cargarHistorialVentas() {
       }
 
       const estadoHtml = (venta.ESTADO !== 'FINALIZADA' && venta.ESTADO !== 'CANCELADA') 
-        ? `<button type="button" class="btn-cancelarv" onclick="cancelarVenta(${venta.ID_VENTA})">❌ Cancelar</button>` 
+        ? `<button type="button" class="btn-aceptarv" onclick="aceptarVenta(${venta.ID_VENTA})">✔️ Aceptar</button>
+           <button type="button" class="btn-cancelarv" onclick="cancelarVenta(${venta.ID_VENTA})">❌ Cancelar</button>` 
         : '';
       row.innerHTML = `
         <td>${venta.ID_VENTA ?? ""}</td>
@@ -355,6 +356,24 @@ async function cancelarVenta(idVenta) {
     alert("Error al cancelar la venta");
   }
 }
+
+async function aceptarVenta(idVenta) {
+  if (!confirm(`¿Deseas aceptar y finalizar la venta ${idVenta}?`)) return;
+
+  try {
+    await api(`/api/ventas/${idVenta}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado: "FINALIZADA" })
+    });
+    alert("Venta aceptada y finalizada exitosamente");
+    cargarHistorialVentas();
+  } catch (err) {
+    console.error("Error al aceptar venta:", err);
+    alert("Error al aceptar la venta");
+  }
+}
+window.aceptarVenta = aceptarVenta;
 
 async function cargarClientes() {
   try {
