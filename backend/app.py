@@ -2077,6 +2077,28 @@ def db_migrate():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/db/migrate/producto')
+def db_migrate_producto():
+    """Solo agrega columna ID_PROVEEDOR a producto (público para extranet)."""
+    resultados = []
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        try:
+            c.execute("ALTER TABLE producto ADD COLUMN ID_PROVEEDOR INT")
+            resultados.append("Columna ID_PROVEEDOR agregada")
+        except Exception as e:
+            if "Duplicate column" in str(e):
+                resultados.append("Columna ya existe")
+            else:
+                resultados.append(f"Error: {e}")
+        conn.commit()
+        c.close()
+        conn.close()
+        return jsonify({"mensaje": "Migración completada", "detalles": resultados})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/db/seed')
 def db_seed():
     if request.headers.get('X-User-Role') != 'Administrador':
