@@ -1858,8 +1858,14 @@ def extranet_login():
     except mysql.connector.Error as err:
         return jsonify({'error': str(err)}), 500
 
+def verificar_proveedor(request, id_proveedor):
+    prov_id = request.headers.get('X-Proveedor-Id')
+    return prov_id is not None and str(prov_id) == str(id_proveedor)
+
 @app.route('/api/extranet/productos/<int:id_proveedor>', methods=['GET'])
 def extranet_obtener_productos(id_proveedor):
+    if not verificar_proveedor(request, id_proveedor):
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
@@ -1879,14 +1885,28 @@ def extranet_obtener_productos(id_proveedor):
 
 @app.route('/api/extranet/productos/<int:id_proveedor>', methods=['POST'])
 def extranet_agregar_producto(id_proveedor):
+    if not verificar_proveedor(request, id_proveedor):
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
-        data = request.json
-        nombre = data.get('nombre')
-        descripcion = data.get('descripcion', '')
-        categoria = data.get('categoria', 'Hamburguesas')
-        cantidad = 0
-        precio = data.get('precio', 0)
-        imagen = data.get('imagen', '')
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            nombre = request.form.get('nombre')
+            descripcion = request.form.get('descripcion', '')
+            categoria = request.form.get('categoria', 'Ensaladas')
+            precio = request.form.get('precio', 0)
+            imagen_file = request.files.get('imagen')
+            if imagen_file and imagen_file.filename:
+                filename = f"{int(time.time())}_{secure_filename(imagen_file.filename)}"
+                ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                imagen_file.save(ruta_imagen)
+            else:
+                filename = ''
+        else:
+            data = request.json
+            nombre = data.get('nombre')
+            descripcion = data.get('descripcion', '')
+            categoria = data.get('categoria', 'Ensaladas')
+            precio = data.get('precio', 0)
+            filename = data.get('imagen', '')
 
         conn = get_db()
         cursor = conn.cursor()
@@ -1896,7 +1916,7 @@ def extranet_agregar_producto(id_proveedor):
         INSERT INTO producto (NOMBRE, DESCRIPCION, CATEGORIA, CANTIDAD, PRECIO, IMAGEN, ESTADO_APROBACION)
         VALUES (%s, %s, %s, %s, %s, %s, 'PENDIENTE')
         """
-        cursor.execute(query_prod, (nombre, descripcion, categoria, cantidad, precio, imagen))
+        cursor.execute(query_prod, (nombre, descripcion, categoria, 0, precio, filename))
         id_producto = cursor.lastrowid
         
         # Vincular a proveedor
@@ -1913,15 +1933,22 @@ def extranet_agregar_producto(id_proveedor):
 
 @app.route('/api/extranet/productos/<int:id_producto>', methods=['PUT'])
 def extranet_editar_producto(id_producto):
+    prov_id = request.headers.get('X-Proveedor-Id')
+    if not prov_id:
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM producto_proveedor WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s", (id_producto, prov_id))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Acceso denegado'}), 403
+        
         data = request.json
         nombre = data.get('nombre')
         precio = data.get('precio')
-        
-        conn = get_db()
-        cursor = conn.cursor()
-        query = "UPDATE producto SET NOMBRE = %s, PRECIO = %s WHERE ID_PRODUCTO = %s"
-        cursor.execute(query, (nombre, precio, id_producto))
+        cursor.execute("UPDATE producto SET NOMBRE = %s, PRECIO = %s WHERE ID_PRODUCTO = %s", (nombre, precio, id_producto))
         conn.commit()
         cursor.close()
         conn.close()
@@ -1932,12 +1959,13 @@ def extranet_editar_producto(id_producto):
 
 @app.route('/api/extranet/productos/<int:id_producto>/<int:id_proveedor>', methods=['DELETE'])
 def extranet_eliminar_producto(id_producto, id_proveedor):
+    if not verificar_proveedor(request, id_proveedor):
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         conn = get_db()
         cursor = conn.cursor()
         query_unlink = "DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s"
         cursor.execute(query_unlink, (id_producto, id_proveedor))
-        # Opcionalmente se podría eliminar el producto si no tiene otras ventas/proveedores
         conn.commit()
         cursor.close()
         conn.close()
