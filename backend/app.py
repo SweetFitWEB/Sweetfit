@@ -463,7 +463,6 @@ def editar_producto(id_producto):
             nombre = request.form.get('nombre')
             descripcion = request.form.get('descripcion')
             categoria = request.form.get('categoria')
-            cantidad = request.form.get('cantidad')
             precio = request.form.get('precio')
 
             imagen = None
@@ -481,15 +480,15 @@ def editar_producto(id_producto):
             if imagen:
                 query = """UPDATE producto 
                            SET NOMBRE = %s, DESCRIPCION = %s, CATEGORIA = %s, 
-                               CANTIDAD = %s, PRECIO = %s, IMAGEN = %s, ESTADO_APROBACION = 'APROBADO' 
+                               PRECIO = %s, IMAGEN = %s, ESTADO_APROBACION = 'APROBADO' 
                            WHERE ID_PRODUCTO = %s"""
-                cursor.execute(query, (nombre, descripcion, categoria, cantidad, precio, imagen, id_producto))
+                cursor.execute(query, (nombre, descripcion, categoria, precio, imagen, id_producto))
             else:
                 query = """UPDATE producto 
                            SET NOMBRE = %s, DESCRIPCION = %s, CATEGORIA = %s, 
-                               CANTIDAD = %s, PRECIO = %s, ESTADO_APROBACION = 'APROBADO' 
+                               PRECIO = %s, ESTADO_APROBACION = 'APROBADO' 
                            WHERE ID_PRODUCTO = %s"""
-                cursor.execute(query, (nombre, descripcion, categoria, cantidad, precio, id_producto))
+                cursor.execute(query, (nombre, descripcion, categoria, precio, id_producto))
 
             conn.commit()
             cursor.close()

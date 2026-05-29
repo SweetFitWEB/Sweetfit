@@ -277,7 +277,7 @@ async function editarProducto(id) {
     form.nombre.value = prod.nombre || '';
     form.descripcion.value = prod.descripcion || '';
     form.precio.value = prod.precio || '';
-    form.cantidad.value = prod.cantidad || '';
+
     form.categoria.value = prod.categoria || '';
     document.getElementById("productoId").value = prod.ID_PRODUCTO || id;
     
