@@ -412,18 +412,30 @@ def eliminar_producto(id_producto):
         return jsonify({'error': 'Acceso denegado'}), 403
     try:
         conn = get_db()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT 1 FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
-        if not cursor.fetchone():
+        cursor.execute("SELECT IMAGEN FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
+        prod = cursor.fetchone()
+        if not prod:
+            cursor.close()
+            conn.close()
             return jsonify({'success': False, 'error': 'Producto no encontrado'}), 404
         
         cursor.execute("DELETE FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
         conn.commit()
+
+        # Eliminar archivo de imagen del disco
+        if prod['IMAGEN']:
+            ruta = os.path.join(app.config['UPLOAD_FOLDER'], prod['IMAGEN'])
+            if os.path.exists(ruta):
+                os.remove(ruta)
+
         cursor.close()
         conn.close()
         return jsonify({'success': True, 'mensaje': 'Producto eliminado correctamente'})
     except mysql.connector.Error as err:
+        if err.errno == 1451:
+            return jsonify({'success': False, 'error': 'No se puede eliminar porque tiene ventas, compras o relaciones asociadas'}), 409
         return jsonify({'success': False, 'error': str(err)}), 500
 
 # Editar producto (actualizar imagen)
