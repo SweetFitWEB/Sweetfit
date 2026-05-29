@@ -7,6 +7,7 @@ from datetime import datetime, date, timedelta
 import re
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+import time
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -379,7 +380,7 @@ def agregar_producto():
         if not imagen_file:
             return jsonify({'error': 'Imagen requerida'}), 400
 
-        filename = secure_filename(imagen_file.filename)
+        filename = f"{int(time.time())}_{secure_filename(imagen_file.filename)}"
         ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         imagen_file.save(ruta_imagen)
 
@@ -469,7 +470,7 @@ def editar_producto(id_producto):
             if 'imagen' in request.files:
                 imagen_file = request.files['imagen']
                 if imagen_file and imagen_file.filename != '':
-                    filename = secure_filename(imagen_file.filename)
+                    filename = f"{int(time.time())}_{secure_filename(imagen_file.filename)}"
                     ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                     imagen_file.save(ruta_imagen)
                     imagen = filename
@@ -1576,7 +1577,7 @@ def obtener_reporte_completo():
                 p.NOMBRE AS producto,
                 p.CATEGORIA,
                 dv.CANTIDAD_VENTA,
-                p.PRECIO,
+                ROUND(dv.SUBTOTAL_VENTA / NULLIF(dv.CANTIDAD_VENTA, 0), 2) AS PRECIO,
                 dv.SUBTOTAL_VENTA
             FROM venta v
             JOIN detalle_venta dv ON v.ID_VENTA = dv.ID_VENTA
@@ -2043,21 +2044,21 @@ def db_seed():
             (8,'Palomitas de Aire','Palomitas de maíz sin aceite, con sal de mar y romero','Snacks Fit',50,25.00,'palomitas_aire.jpg','APROBADO'),
             (9,'Protein Shake','Licuado de proteína vegetal, plátano y leche de almendras','Jugos y Licuados',20,65.00,'leche_coco.jpg','APROBADO'),
             (10,'Ensalada de Atún (Propuesta)','Ensalada de atún fresco con mezcla de verdes, pepino y jitomate cherry','Ensaladas',40,45.00,'Deli_Tuna_CH.jpg','PENDIENTE'),
-            (11,'Pack Protein Bars (Propuesta)','Pack 12 barritas proteicas sabor chocolate y vainilla','Snacks Fit',60,25.00,'barritas_proteicas.jpg','PENDIENTE'),
-            (12,'Bowl de Frutos Rojos','Açaí, frutos rojos, granola, plátano y miel de agave','Bowls',18,95.00,'aguacate.jpg','APROBADO'),
-            (13,'Wrap de Pollo Fit','Tortilla integral, pollo, espinaca, jitomate y aderezo yogurt','Ensaladas',22,69.00,'aderezo.jpg','APROBADO'),
-            (14,'Huevos Revueltos Fit','Huevos revueltos con espinaca, champiñones y pan integral','Proteína',20,59.00,'pechuga.jpg','APROBADO'),
-            (15,'Batido de Mango','Mango, leche de coco y proteína vegetal','Jugos y Licuados',25,58.00,'Extra_Naranja.jpg','APROBADO'),
-            (16,'Té Helado Natural','Té verde, limón y stevia, sin azúcar añadida','Bebidas',45,28.00,'naranja_miel.jpg','APROBADO'),
-            (17,'Almendras Especiadas','Almendras tostadas con romero y sal de mar','Snacks Fit',35,38.00,'palomitas_aire.jpg','APROBADO'),
-            (18,'Bowl Energético','Quinoa, pollo, aguacate, mango y vinagreta cítrica','Bowls',15,99.00,'aguacate.jpg','APROBADO'),
-            (19,'Tostadas de Aguacate','Pan integral, aguacate, huevo poché y microverdes','Ensaladas',20,65.00,'aderezo.jpg','APROBADO'),
-            (20,'Pechuga BBQ Light','Pechuga bañada en salsa BBQ sin azúcar, horneada','Proteína',18,85.00,'pechuga.jpg','APROBADO'),
-            (21,'Smoothie de Fresa','Fresa, plátano, leche de almendras y proteína','Jugos y Licuados',22,60.00,'leche_coco.jpg','APROBADO'),
-            (22,'Agua de Jamaica','Agua fresca de jamaica endulzada con stevia','Bebidas',50,20.00,'naranja_miel.jpg','APROBADO'),
-            (23,'Mix Frutos Secos','Nuez, almendra, cacahuate y arándano deshidratado','Snacks Fit',40,35.00,'barritas_proteicas.jpg','APROBADO'),
-            (24,'Chía Pudding','Pudín de chía con leche de coco y frutos rojos','Bowls',25,55.00,'aguacate.jpg','APROBADO'),
-            (25,'Wrap Vegetariano','Tortilla integral, hummus, verduras asadas y rúcula','Ensaladas',20,62.00,'aderezo.jpg','APROBADO'),
+            (11,'Pack Protein Bars (Propuesta)','Pack 12 barritas proteicas sabor chocolate y vainilla','Snacks Fit',60,25.00,'Tentacion_CH.jpg','PENDIENTE'),
+            (12,'Bowl de Frutos Rojos','Açaí, frutos rojos, granola, plátano y miel de agave','Bowls',18,95.00,'De_la_Casa_CH.jpg','APROBADO'),
+            (13,'Wrap de Pollo Fit','Tortilla integral, pollo, espinaca, jitomate y aderezo yogurt','Ensaladas',22,69.00,'Wraps_Pollo.jpg','APROBADO'),
+            (14,'Huevos Revueltos Fit','Huevos revueltos con espinaca, champiñones y pan integral','Proteína',20,59.00,'huevo_revueltos.jpg','APROBADO'),
+            (15,'Batido de Mango','Mango, leche de coco y proteína vegetal','Jugos y Licuados',25,58.00,'Agua_especial.jpg','APROBADO'),
+            (16,'Té Helado Natural','Té verde, limón y stevia, sin azúcar añadida','Bebidas',45,28.00,'Agua_del_Dia.jpg','APROBADO'),
+            (17,'Almendras Especiadas','Almendras tostadas con romero y sal de mar','Snacks Fit',35,38.00,'Gelatina_light.jpg','APROBADO'),
+            (18,'Bowl Energético','Quinoa, pollo, aguacate, mango y vinagreta cítrica','Bowls',15,99.00,'Gourmet_GDE.jpg','APROBADO'),
+            (19,'Tostadas de Aguacate','Pan integral, aguacate, huevo poché y microverdes','Ensaladas',20,65.00,'avocado_toast.jpg','APROBADO'),
+            (20,'Pechuga BBQ Light','Pechuga bañada en salsa BBQ sin azúcar, horneada','Proteína',18,85.00,'pechuga_asada.jpg','APROBADO'),
+            (21,'Smoothie de Fresa','Fresa, plátano, leche de almendras y proteína','Jugos y Licuados',22,60.00,'Gourmet_CH.jpg','APROBADO'),
+            (22,'Agua de Jamaica','Agua fresca de jamaica endulzada con stevia','Bebidas',50,20.00,'Agua_embotellada.jpg','APROBADO'),
+            (23,'Mix Frutos Secos','Nuez, almendra, cacahuate y arándano deshidratado','Snacks Fit',40,35.00,'malangas_horneadas.jpg','APROBADO'),
+            (24,'Chía Pudding','Pudín de chía con leche de coco y frutos rojos','Bowls',25,55.00,'De_la_Casa_GDE.jpg','APROBADO'),
+            (25,'Wrap Vegetariano','Tortilla integral, hummus, verduras asadas y rúcula','Ensaladas',20,62.00,'toast_tres_quesos.jpg','APROBADO'),
         ])
         seed.append('25 productos')
 
