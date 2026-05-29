@@ -87,9 +87,24 @@
           <select id="pedidoTipo">
             <option value="Local">🪑 Para comer aquí (Local)</option>
             <option value="Domicilio">🛵 A domicilio</option>
-            <option value="App">📱 Para llevar</option>
           </select>
         </div>
+
+        <div id="direccionFields" style="display:none;">
+          <div>
+            <label for="pedidoCalle">Calle y número</label>
+            <input type="text" id="pedidoCalle" placeholder="ej: Av. Reforma #123" />
+          </div>
+          <div>
+            <label for="pedidoColonia">Colonia</label>
+            <input type="text" id="pedidoColonia" placeholder="ej: Centro" />
+          </div>
+          <div>
+            <label for="pedidoReferencia">Referencia (opcional)</label>
+            <input type="text" id="pedidoReferencia" placeholder="ej: Frente al parque" />
+          </div>
+        </div>
+
         <div>
           <label for="pedidoNotas">Notas / Alergias (opcional)</label>
           <textarea id="pedidoNotas" placeholder="Sin cebolla, extra salsa, etc."></textarea>

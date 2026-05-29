@@ -226,7 +226,7 @@ async function cargarHistorialVentas() {
         <td>${venta.nombre_empleado ?? ""}</td>
         <td>$${parseFloat(venta.TOTAL_VENTA || 0).toFixed(2)}</td>
         <td>${formatoEstado(venta.ESTADO)}</td>
-        <td><button type="button" onclick="verDetalleVenta(${venta.ID_VENTA})">Ver</button></td>
+        <td><button type="button" class="btn-ver-detalle" onclick="verDetalleVenta(${venta.ID_VENTA})">Ver</button></td>
         <td>${estadoHtml}</td>
       `;
     });
@@ -246,25 +246,94 @@ async function verDetalleVenta(idVenta) {
 
   try {
     const data = await api(`/api/ventas/${idVenta}`);
+    const fecha = data.fecha ? new Date(data.fecha).toLocaleDateString("es-ES", {
+      year: "numeric", month: "long", day: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    }) : "";
+
+    const tipoClass = data.tipo_venta === "Local" ? "tag-local"
+      : data.tipo_venta === "Domicilio" ? "tag-domicilio"
+      : "tag-app";
+
     const detalles = (data.detallesV || []).map((d) => {
       const precio = parseFloat(d.PRECIO_UNITARIO || 0);
       const subtotal = parseFloat(d.SUBTOTAL_VENTA || 0);
       return `<tr><td>${d.PRODUCTO ?? ""}</td><td>${d.CANTIDAD_VENTA ?? ""}</td><td>$${precio.toFixed(2)}</td><td>$${subtotal.toFixed(2)}</td></tr>`;
     }).join("");
 
+    const total = (data.detallesV || []).reduce((sum, d) => sum + parseFloat(d.SUBTOTAL_VENTA || 0), 0);
+
+    const esWeb = data.es_pedido_web;
+    const webBadge = esWeb ? `<span class="venta-detalle-web-badge">🌐 Pedido Web</span>` : "";
+
+    const direccionHtml = (esWeb && data.direccion_web)
+      ? `<div class="venta-detalle-info-item">
+          <span class="info-label">Dirección de entrega</span>
+          <span class="info-value">${data.direccion_web}</span>
+        </div>`
+      : "";
+
+    const notasHtml = (esWeb && data.notas_web)
+      ? `<div class="venta-detalle-info-item venta-detalle-notas">
+          <span class="info-label">Notas del pedido</span>
+          <span class="info-value">${data.notas_web}</span>
+        </div>`
+      : "";
+
     cont.innerHTML = `
-      <img src="img/logosweet.png" style="max-width: 100px; display: block; margin: auto;">
-      <p><strong>Orden:</strong> ${data.orden ?? ""}</p>
-      <p><strong>Fecha:</strong> ${data.fecha ?? ""}</p>
-      <p><strong>Cliente:</strong> ${data.cliente ?? ""}</p>
-      <p><strong>Empleado:</strong> ${data.empleado ?? ""}</p>
-      <table class="lista-productos-seleccionados">
-        <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
-        <tbody>${detalles}</tbody>
-      </table>
+      <div class="venta-detalle-header-info">
+        <div class="venta-detalle-logo">
+          <img src="img/logosweet.png" alt="Sweetfit">
+          ${webBadge}
+        </div>
+        <div class="venta-detalle-meta">
+          <div class="venta-detalle-badge">#${data.orden ?? ""}</div>
+          <span class="venta-detalle-tipo ${tipoClass}">${data.tipo_venta ?? ""}</span>
+        </div>
+      </div>
+
+      <div class="venta-detalle-info-grid">
+        <div class="venta-detalle-info-item">
+          <span class="info-label">Fecha</span>
+          <span class="info-value">${fecha}</span>
+        </div>
+        <div class="venta-detalle-info-item">
+          <span class="info-label">Cliente</span>
+          <span class="info-value">${data.cliente ?? ""}</span>
+        </div>
+        <div class="venta-detalle-info-item">
+          <span class="info-label">Empleado</span>
+          <span class="info-value">${data.empleado ?? ""}</span>
+        </div>
+        <div class="venta-detalle-info-item">
+          <span class="info-label">Dirección</span>
+          <span class="info-value">${data.direccion || "N/A"}</span>
+        </div>
+        ${esWeb ? `
+        <div class="venta-detalle-info-item">
+          <span class="info-label">Teléfono contacto</span>
+          <span class="info-value">${data.telefono_web || "N/A"}</span>
+        </div>
+        ` : ""}
+        ${direccionHtml}
+        ${notasHtml}
+      </div>
+
+      <h4 class="venta-detalle-subtitulo">Productos</h4>
+      <div class="venta-detalle-tabla-wrapper">
+        <table class="venta-detalle-tabla">
+          <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+          <tbody>${detalles}</tbody>
+        </table>
+      </div>
+
+      <div class="venta-detalle-total">
+        <span>Total</span>
+        <span>$${total.toFixed(2)}</span>
+      </div>
     `;
 
-    modal.style.display = "block";
+    modal.style.display = "flex";
   } catch (error) {
     console.error("Error al cargar detalle de venta:", error);
   }
