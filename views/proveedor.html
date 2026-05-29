@@ -38,24 +38,43 @@
 <div class="modal" id="modalCompra">
   <div class="modal-contenido grande">
     <span class="cerrar-modal" onclick="cerrarModalCompra()">×</span>
-    <h3>Nueva Compra</h3>
+    <h3>🛒 Nueva Compra a Proveedores</h3>
     <form id="formCompra">
-      <label for="proveedorSelect">Proveedor:</label>
-      <select id="proveedorSelect" name="proveedor" required></select>
-
-      <label for="productoSelect">Producto:</label>
-      <select id="productoSelect" name="producto">
-        <!-- Productos desde la BD -->
-      </select>
-
-      <input type="number" id="cantidadProducto" name="cantidad" placeholder="Cantidad" min="1" />
-      <button type="button" onclick="agregarProductoCompra()">Agregar a compra</button>
-
-      <div id="listaProductosCompra">
-        <!-- Productos agregados a la compra -->
+      <!-- Seleccionar Proveedor -->
+      <div class="compra-seccion">
+        <label for="proveedorSelect" class="compra-label"><i class="fi fi-br-truck-box"></i> Proveedor:</label>
+        <select id="proveedorSelect" name="proveedor" required class="compra-select"></select>
       </div>
 
-      <button type="submit" class="btn-guardar-compra">💾 Guardar Compra</button>
+      <!-- Agregar Productos Grid -->
+      <div class="compra-seccion compra-add-box">
+        <h4 class="compra-subsec-titulo">Agregar Productos a la Compra</h4>
+        <div class="compra-producto-grid">
+          <div class="grid-field">
+            <label for="productoSelect">Producto:</label>
+            <select id="productoSelect" name="producto" class="compra-select"></select>
+          </div>
+          <div class="grid-field" style="max-width: 120px;">
+            <label for="cantidadProducto">Cantidad:</label>
+            <input type="number" id="cantidadProducto" name="cantidad" placeholder="Cant." min="1"
+              class="compra-input" />
+          </div>
+          <div class="grid-field-btn">
+            <button type="button" class="btn-agregar-compra-item" onclick="agregarProductoCompra()">➕ Agregar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen de Productos de la Compra -->
+      <div class="compra-seccion">
+        <h4 class="compra-subsec-titulo">Resumen de la Compra</h4>
+        <div id="listaProductosCompra" class="compra-lista-resumen">
+          <p class="compra-vacio-msg">Aún no se han agregado productos a esta compra.</p>
+        </div>
+      </div>
+
+      <!-- Guardar Compra -->
+      <button type="submit" class="btn-guardar-compra"> Guardar Compra</button>
     </form>
   </div>
 </div>
