@@ -243,14 +243,14 @@ async function descargarReporteGlobal(formato) {
 }
 
 function exportarCSV(data) {
-  const { ventas, compras, totalVentas, totalCompras } = data;
+  const { ventas, totalVentas } = data;
   const fechaHoy = new Date().toLocaleDateString("es-MX", {
     year: "numeric", month: "long", day: "numeric"
   });
 
   let csv = "";
   csv += "SWEETFIT\n";
-  csv += "Reporte Detallado de Ventas y Compras\n";
+  csv += "Reporte Detallado de Ventas\n";
   csv += `Fecha de generacion: ${fechaHoy}\n`;
   csv += "\n";
 
@@ -263,23 +263,12 @@ function exportarCSV(data) {
     csv += `Venta,${v.FECHA_VENTA},${v.producto},${v.CATEGORIA},${v.CANTIDAD_VENTA},${Number(v.PRECIO).toFixed(2)},${Number(v.SUBTOTAL_VENTA).toFixed(2)}\n`;
   });
 
-  // Compras
-  csv += "\n";
-  csv += "===========================\n";
-  csv += "SECCION: COMPRAS A PROVEEDORES\n";
-  csv += "===========================\n";
-  csv += "Tipo,Fecha,Proveedor,Producto,Cantidad,Subtotal\n";
-  (compras || []).forEach(c => {
-    csv += `Compra,${c.FECHA_COMPRA},${c.proveedor},${c.producto},${c.CANTIDAD_COMPRA},${Number(c.SUBTOTAL_COMPRA).toFixed(2)}\n`;
-  });
-
   // Totales
   csv += "\n";
   csv += "===========================\n";
-  csv += "TOTALES\n";
+  csv += "TOTAL\n";
   csv += "===========================\n";
-  csv += `Total Ventas,,,$${Number(totalVentas || 0).toFixed(2)}\n`;
-  csv += `Total Compras,,,$${Number(totalCompras || 0).toFixed(2)}\n`;
+  csv += `Total Ventas,$${Number(totalVentas || 0).toFixed(2)}\n`;
 
   // Convertir a Blob y descargar
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -315,16 +304,15 @@ async function exportarPDF(data) {
   const doc = new jsPDF("p", "mm", "a4");
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  let y = 20; // Posición inicial en Y
+  let y = 20;
 
-  // Título
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
   doc.text("SWEETFIT", pageWidth / 2, y, { align: "center" });
   y += 10;
 
   doc.setFontSize(14);
-  doc.text("Reporte Detallado de Ventas y Compras", pageWidth / 2, y, { align: "center" });
+  doc.text("Reporte Detallado de Ventas", pageWidth / 2, y, { align: "center" });
   y += 10;
 
   const fechaHoy = new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
@@ -333,7 +321,6 @@ async function exportarPDF(data) {
   doc.text(`Fecha de generación: ${fechaHoy}`, pageWidth / 2, y, { align: "center" });
   y += 15;
 
-  // ==== SECCIÓN VENTAS ====
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("VENTAS", 14, y);
@@ -360,31 +347,6 @@ async function exportarPDF(data) {
 
   y = doc.lastAutoTable.finalY + 15;
 
-  // ==== SECCIÓN COMPRAS ====
-  doc.text("COMPRAS A PROVEEDORES", 14, y);
-  y += 5;
-
-  const headCompras = [["Fecha", "Proveedor", "Producto", "Cant.", "Subtotal"]];
-  const bodyCompras = (data.compras || []).map(c => [
-    c.FECHA_COMPRA,
-    c.proveedor,
-    c.producto,
-    c.CANTIDAD_COMPRA,
-    `$${Number(c.SUBTOTAL_COMPRA).toFixed(2)}`
-  ]);
-
-  doc.autoTable({
-    startY: y,
-    head: headCompras,
-    body: bodyCompras,
-    theme: "striped",
-    styles: { fontSize: 10 },
-    headStyles: { fillColor: [192, 57, 43] },
-  });
-
-  y = doc.lastAutoTable.finalY + 15;
-
-  // ==== RESUMEN ====
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("RESUMEN TOTAL", 14, y);
@@ -393,8 +355,6 @@ async function exportarPDF(data) {
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
   doc.text(`Total en Ventas: $${Number(data.totalVentas || 0).toFixed(2)}`, 14, y);
-  y += 8;
-  doc.text(`Total en Compras: $${Number(data.totalCompras || 0).toFixed(2)}`, 14, y);
 
   doc.save("Reporte_Sweetfit.pdf");
 }
