@@ -2079,7 +2079,7 @@ def db_migrate():
 
 @app.route('/db/migrate/producto')
 def db_migrate_producto():
-    """Solo agrega columna ID_PROVEEDOR a producto (público para extranet)."""
+    """Agrega columna ID_PROVEEDOR a producto y pobla desde producto_proveedor."""
     resultados = []
     try:
         conn = get_db()
@@ -2092,6 +2092,21 @@ def db_migrate_producto():
                 resultados.append("Columna ya existe")
             else:
                 resultados.append(f"Error: {e}")
+        # Poblar ID_PROVEEDOR desde producto_proveedor para productos existentes
+        try:
+            c.execute("""
+                UPDATE producto p
+                JOIN producto_proveedor pp ON p.ID_PRODUCTO = pp.ID_PRODUCTO
+                SET p.ID_PROVEEDOR = pp.ID_PROVEEDOR
+                WHERE p.ID_PROVEEDOR IS NULL
+            """)
+            filas = c.rowcount
+            if filas > 0:
+                resultados.append(f"ID_PROVEEDOR actualizado en {filas} productos")
+            else:
+                resultados.append("No hubo productos por actualizar")
+        except Exception as e:
+            resultados.append(f"Error al poblar: {e}")
         conn.commit()
         c.close()
         conn.close()
