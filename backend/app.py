@@ -118,6 +118,24 @@ def crear_pedido_online():
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
+        # Validar stock disponible para todos los productos
+        for item in items:
+            id_producto = item.get('id_producto')
+            cantidad_pedido = int(item.get('cantidad', 0))
+
+            cursor.execute("SELECT NOMBRE, CANTIDAD FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
+            prod = cursor.fetchone()
+            if not prod:
+                cursor.close()
+                conn.close()
+                return jsonify({'error': f'Producto con ID {id_producto} no encontrado'}), 404
+            
+            stock_actual = prod['CANTIDAD']
+            if cantidad_pedido > stock_actual:
+                cursor.close()
+                conn.close()
+                return jsonify({'error': f"Stock insuficiente para el producto '{prod['NOMBRE']}' (Disponible: {stock_actual}, Pedido: {cantidad_pedido})"}), 400
+
         # Insertar venta
         cursor.execute("""
             INSERT INTO venta (TIPO_VENTA, TOTAL_VENTA, ESTADO, ID_CLIENTE, ID_EMPLEADO)
@@ -125,7 +143,7 @@ def crear_pedido_online():
         """, (tipo, total))
         id_venta = cursor.lastrowid
 
-        # Insertar detalle_venta
+        # Insertar detalle_venta y descontar stock
         for item in items:
             cursor.execute("""
                 INSERT INTO detalle_venta (ID_VENTA, ID_PRODUCTO, CANTIDAD_VENTA, SUBTOTAL_VENTA)
@@ -136,6 +154,11 @@ def crear_pedido_online():
                 item['cantidad'],
                 float(item['precio']) * int(item['cantidad'])
             ))
+            cursor.execute("""
+                UPDATE producto 
+                SET CANTIDAD = CANTIDAD - %s 
+                WHERE ID_PRODUCTO = %s
+            """, (int(item['cantidad']), item['id_producto']))
 
         conn.commit()
         cursor.close()
@@ -780,6 +803,11 @@ def actualizar_venta_completa(id_venta):
                 subtotal = item.get("subtotal")
 
                 cursor.execute(insert_detalle_query, (id_venta, id_producto, cantidad, subtotal))
+                cursor.execute("""
+                    UPDATE producto 
+                    SET CANTIDAD = CANTIDAD - %s 
+                    WHERE ID_PRODUCTO = %s
+                """, (cantidad, id_producto))
 
         conn.commit()
         cursor.close()
