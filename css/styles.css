@@ -2222,6 +2222,10 @@ body.modal-abierto {
   padding: 0.5rem;
 }
 
+.image-upload-area.has-image:hover {
+  background: #f8fafc;
+}
+
 .image-upload-area input[type="file"] {
   display: none;
 }
@@ -2257,6 +2261,31 @@ body.modal-abierto {
   border-radius: 8px;
   object-fit: contain;
   display: none;
+  pointer-events: none;
+}
+
+.image-upload-overlay {
+  display: none;
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.image-upload-area.has-image .image-upload-overlay {
+  display: block;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.image-upload-area.has-image .image-upload-overlay:hover {
+  background: rgba(0,0,0,0.8);
 }
 
 /* Modal Footer */

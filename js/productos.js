@@ -74,8 +74,10 @@ function initProductoModal() {
 
   if (uploadArea && fileInput) {
     uploadArea.addEventListener("click", (e) => {
-      if (e.target === fileInput) return;
-      fileInput.click();
+      if (e.target === fileInput || e.target.closest("#previewImagen")) return;
+      if (e.target.closest("#btnCambiarImagen") || !uploadArea.classList.contains("has-image")) {
+        fileInput.click();
+      }
     });
 
     fileInput.addEventListener("change", (e) => {
