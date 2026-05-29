@@ -181,14 +181,8 @@ async function cargarProductos(categoria = null, pagina = 1, texto = "") {
       (data.productos || []).forEach((prod) => {
         const card = document.createElement("div");
         card.className = "producto-card";
-
-        const estado = prod.ESTADO_APROBACION || prod.estado_aprobacion || 'APROBADO';
-        const badgeClass = estado === 'EN_EDICION' ? 'badge-en-edicion' :
-                           estado === 'APROBADO' ? '' : 'badge-pendiente';
-
         card.innerHTML = `
           <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" />
-          ${estado === 'EN_EDICION' ? '<span class="badge-estado-card">Pendiente de publicar</span>' : ''}
           <h3>${prod.nombre}</h3>
           <p class="desc">${prod.descripcion}</p>
           <p class="cantidad ${prod.cantidad <= 5 ? "stock-bajo" : ""}">
@@ -197,7 +191,6 @@ async function cargarProductos(categoria = null, pagina = 1, texto = "") {
           <p class="precio">$${parseFloat(prod.precio).toFixed(2)}</p>
           <div class="acciones">
             <button class="btn-editar" onclick="editarProducto(${prod.id})" ${esAdmin ? '' : 'style="display:none"'}>Editar</button>
-            ${esAdmin && estado === 'EN_EDICION' ? `<button class="btn-publicar" onclick="publicarProducto(${prod.id})">Publicar</button>` : ''}
             <button class="btn-eliminar" onclick="eliminarProducto(${prod.id})" ${esAdmin ? '' : 'style="display:none"'}>Eliminar</button>
           </div>
         `;
@@ -375,33 +368,15 @@ async function procesarAprobacion(idProducto, estado) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado })
     });
-
-    if (estado === 'APROBADO') {
-      mostrarNotificacion("Producto aprobado. Ahora edítalo antes de publicarlo.", "success");
-    } else {
-      mostrarNotificacion(`Producto ${estado.toLowerCase()}`, "success");
-    }
+    alert(`Producto ${estado.toLowerCase()}`);
     cargarAprobaciones();
     cargarProductos(categoriaActual, paginaActual);
   } catch (err) {
     console.error("Error al procesar aprobación:", err);
-    mostrarNotificacion("Hubo un problema al procesar la aprobación.", "error");
+    alert("Hubo un problema al procesar la aprobación.");
   }
 }
 window.procesarAprobacion = procesarAprobacion;
-
-async function publicarProducto(id) {
-  if (!confirm("¿Publicar este producto en el menú?")) return;
-  try {
-    await api(`/api/productos/${id}/publicar`, { method: 'PUT' });
-    mostrarNotificacion("Producto publicado en el menú", "success");
-    cargarProductos(categoriaActual, paginaActual);
-  } catch (err) {
-    console.error("Error al publicar producto:", err);
-    mostrarNotificacion("Error al publicar producto", "error");
-  }
-}
-window.publicarProducto = publicarProducto;
 
 // Ocultar botón de aprobaciones si no es admin
 document.addEventListener("DOMContentLoaded", () => {

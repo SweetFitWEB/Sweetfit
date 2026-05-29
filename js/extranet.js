@@ -85,7 +85,6 @@ async function cargarCatalogo(idProveedor) {
       
       const estado = prod.ESTADO_APROBACION || 'APROBADO';
       const badgeClass = estado === 'APROBADO' ? 'badge-aprobado' : 
-                         estado === 'EN_EDICION' ? 'badge-en-edicion' :
                          estado === 'RECHAZADO' ? 'badge-rechazado' : 'badge-pendiente';
 
       div.innerHTML = `
