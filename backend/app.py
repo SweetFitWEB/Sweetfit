@@ -1862,10 +1862,8 @@ def extranet_obtener_productos(id_proveedor):
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
         query = """
-        SELECT p.* 
-        FROM producto p
-        JOIN producto_proveedor pp ON p.ID_PRODUCTO = pp.ID_PRODUCTO
-        WHERE pp.ID_PROVEEDOR = %s
+        SELECT * FROM producto
+        WHERE ID_PROVEEDOR = %s
         """
         cursor.execute(query, (id_proveedor,))
         productos = cursor.fetchall()
@@ -1889,17 +1887,13 @@ def extranet_agregar_producto(id_proveedor):
         conn = get_db()
         cursor = conn.cursor()
         
-        # Insertar producto PENDIENTE
+        # Insertar producto PENDIENTE (sin vincular aún a producto_proveedor)
         query_prod = """
-        INSERT INTO producto (NOMBRE, DESCRIPCION, CATEGORIA, CANTIDAD, PRECIO, IMAGEN, ESTADO_APROBACION)
-        VALUES (%s, %s, %s, %s, %s, %s, 'PENDIENTE')
+        INSERT INTO producto (NOMBRE, DESCRIPCION, CATEGORIA, CANTIDAD, PRECIO, IMAGEN, ESTADO_APROBACION, ID_PROVEEDOR)
+        VALUES (%s, %s, %s, %s, %s, %s, 'PENDIENTE', %s)
         """
-        cursor.execute(query_prod, (nombre, descripcion, categoria, cantidad, precio, imagen))
+        cursor.execute(query_prod, (nombre, descripcion, categoria, cantidad, precio, imagen, id_proveedor))
         id_producto = cursor.lastrowid
-        
-        # Vincular a proveedor
-        query_link = "INSERT INTO producto_proveedor (ID_PRODUCTO, ID_PROVEEDOR) VALUES (%s, %s)"
-        cursor.execute(query_link, (id_producto, id_proveedor))
         
         conn.commit()
         cursor.close()
@@ -1933,9 +1927,8 @@ def extranet_eliminar_producto(id_producto, id_proveedor):
     try:
         conn = get_db()
         cursor = conn.cursor()
-        query_unlink = "DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s"
-        cursor.execute(query_unlink, (id_producto, id_proveedor))
-        # Opcionalmente se podría eliminar el producto si no tiene otras ventas/proveedores
+        cursor.execute("DELETE FROM producto WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s", (id_producto, id_proveedor))
+        # (producto_proveedor se borra por CASCADE)
         conn.commit()
         cursor.close()
         conn.close()
@@ -1957,8 +1950,7 @@ def obtener_productos_pendientes():
         query = """
         SELECT p.*, pr.NOMBRE as proveedor_nombre 
         FROM producto p
-        LEFT JOIN producto_proveedor pp ON p.ID_PRODUCTO = pp.ID_PRODUCTO
-        LEFT JOIN proveedor pr ON pp.ID_PROVEEDOR = pr.ID_PROVEEDOR
+        LEFT JOIN proveedor pr ON p.ID_PROVEEDOR = pr.ID_PROVEEDOR
         WHERE p.ESTADO_APROBACION = 'PENDIENTE'
         """
         cursor.execute(query)
@@ -1980,9 +1972,12 @@ def aprobar_producto(id_producto):
         cursor = conn.cursor()
 
         if estado == 'RECHAZADO':
-            cursor.execute("DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s", (id_producto,))
             cursor.execute("DELETE FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
         else:
+            cursor.execute("SELECT ID_PROVEEDOR FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
+            row = cursor.fetchone()
+            if row and row[0]:
+                cursor.execute("INSERT IGNORE INTO producto_proveedor (ID_PRODUCTO, ID_PROVEEDOR) VALUES (%s, %s)", (id_producto, row[0]))
             cursor.execute("UPDATE producto SET ESTADO_APROBACION = %s WHERE ID_PRODUCTO = %s", (estado, id_producto))
 
         conn.commit()
@@ -2016,7 +2011,8 @@ def db_migrate():
             "ALTER TABLE venta ADD COLUMN NOMBRE_CLIENTE_WEB VARCHAR(255)",
             "ALTER TABLE venta ADD COLUMN TELEFONO_CLIENTE_WEB VARCHAR(20)",
             "ALTER TABLE venta ADD COLUMN NOTAS_PEDIDO TEXT",
-            "ALTER TABLE venta ADD COLUMN DIRECCION_CLIENTE_WEB TEXT"
+            "ALTER TABLE venta ADD COLUMN DIRECCION_CLIENTE_WEB TEXT",
+            "ALTER TABLE producto ADD COLUMN ID_PROVEEDOR INT"
         ]
         for sql in migraciones:
             try:
@@ -2102,39 +2098,43 @@ def db_seed():
         ])
         seed.append('10 clientes')
 
-        c.executemany("INSERT INTO producto (ID_PRODUCTO,NOMBRE,DESCRIPCION,CATEGORIA,CANTIDAD,PRECIO,IMAGEN,ESTADO_APROBACION) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", [
-            (1,'Ensalada Caesar Fit','Lechuga romana, pollo grillé, crutones integrales, aderezo light','Ensaladas',25,79.00,'aderezo.jpg','APROBADO'),
-            (2,'Bowl Verde','Quinoa, espinaca, aguacate, pepino, brócoli y vinagreta de limón','Bowls',20,89.00,'aguacate.jpg','APROBADO'),
-            (3,'Pechuga Empanizada','Pechuga de pollo empanizada con avena, horneada no frita','Proteína',30,79.00,'pechuga.jpg','APROBADO'),
-            (4,'Salmón a la Plancha','Filete de salmón fresco con especias y vegetales salteados','Proteína',15,119.00,'atun.jpg','APROBADO'),
-            (5,'Barrita Proteica','Barrita de proteína vegetal, sin azúcar añadida','Snacks Fit',50,29.00,'barritas_proteicas.jpg','APROBADO'),
-            (6,'Green Smoothie','Espinaca, piña, manzana verde y jengibre','Jugos y Licuados',30,55.00,'Extra_Naranja.jpg','APROBADO'),
-            (7,'Limonada con Chía','Limonada natural con semillas de chía y stevia','Bebidas',40,35.00,'naranja_miel.jpg','APROBADO'),
-            (8,'Palomitas de Aire','Palomitas de maíz sin aceite, con sal de mar y romero','Snacks Fit',50,25.00,'palomitas_aire.jpg','APROBADO'),
-            (9,'Protein Shake','Licuado de proteína vegetal, plátano y leche de almendras','Jugos y Licuados',20,65.00,'leche_coco.jpg','APROBADO'),
-            (10,'Ensalada de Atún (Propuesta)','Ensalada de atún fresco con mezcla de verdes, pepino y jitomate cherry','Ensaladas',40,45.00,'Deli_Tuna_CH.jpg','PENDIENTE'),
-            (11,'Pack Protein Bars (Propuesta)','Pack 12 barritas proteicas sabor chocolate y vainilla','Snacks Fit',60,25.00,'Tentacion_CH.jpg','PENDIENTE'),
-            (12,'Bowl de Frutos Rojos','Açaí, frutos rojos, granola, plátano y miel de agave','Bowls',18,95.00,'De_la_Casa_CH.jpg','APROBADO'),
-            (13,'Wrap de Pollo Fit','Tortilla integral, pollo, espinaca, jitomate y aderezo yogurt','Ensaladas',22,69.00,'Wraps_Pollo.jpg','APROBADO'),
-            (14,'Huevos Revueltos Fit','Huevos revueltos con espinaca, champiñones y pan integral','Proteína',20,59.00,'huevo_revueltos.jpg','APROBADO'),
-            (15,'Batido de Mango','Mango, leche de coco y proteína vegetal','Jugos y Licuados',25,58.00,'Agua_especial.jpg','APROBADO'),
-            (16,'Té Helado Natural','Té verde, limón y stevia, sin azúcar añadida','Bebidas',45,28.00,'Agua_del_Dia.jpg','APROBADO'),
-            (17,'Almendras Especiadas','Almendras tostadas con romero y sal de mar','Snacks Fit',35,38.00,'Gelatina_light.jpg','APROBADO'),
-            (18,'Bowl Energético','Quinoa, pollo, aguacate, mango y vinagreta cítrica','Bowls',15,99.00,'Gourmet_GDE.jpg','APROBADO'),
-            (19,'Tostadas de Aguacate','Pan integral, aguacate, huevo poché y microverdes','Ensaladas',20,65.00,'avocado_toast.jpg','APROBADO'),
-            (20,'Pechuga BBQ Light','Pechuga bañada en salsa BBQ sin azúcar, horneada','Proteína',18,85.00,'pechuga_asada.jpg','APROBADO'),
-            (21,'Smoothie de Fresa','Fresa, plátano, leche de almendras y proteína','Jugos y Licuados',22,60.00,'Gourmet_CH.jpg','APROBADO'),
-            (22,'Agua de Jamaica','Agua fresca de jamaica endulzada con stevia','Bebidas',50,20.00,'Agua_embotellada.jpg','APROBADO'),
-            (23,'Mix Frutos Secos','Nuez, almendra, cacahuate y arándano deshidratado','Snacks Fit',40,35.00,'malangas_horneadas.jpg','APROBADO'),
-            (24,'Chía Pudding','Pudín de chía con leche de coco y frutos rojos','Bowls',25,55.00,'De_la_Casa_GDE.jpg','APROBADO'),
-            (25,'Wrap Vegetariano','Tortilla integral, hummus, verduras asadas y rúcula','Ensaladas',20,62.00,'toast_tres_quesos.jpg','APROBADO'),
+        c.executemany("INSERT INTO producto (ID_PRODUCTO,NOMBRE,DESCRIPCION,CATEGORIA,CANTIDAD,PRECIO,IMAGEN,ESTADO_APROBACION,ID_PROVEEDOR) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", [
+            (1,'Ensalada Caesar Fit','Lechuga romana, pollo grillé, crutones integrales, aderezo light','Ensaladas',25,79.00,'aderezo.jpg','APROBADO',1),
+            (2,'Bowl Verde','Quinoa, espinaca, aguacate, pepino, brócoli y vinagreta de limón','Bowls',20,89.00,'aguacate.jpg','APROBADO',1),
+            (3,'Pechuga Empanizada','Pechuga de pollo empanizada con avena, horneada no frita','Proteína',30,79.00,'pechuga.jpg','APROBADO',2),
+            (4,'Salmón a la Plancha','Filete de salmón fresco con especias y vegetales salteados','Proteína',15,119.00,'atun.jpg','APROBADO',2),
+            (5,'Barrita Proteica','Barrita de proteína vegetal, sin azúcar añadida','Snacks Fit',50,29.00,'barritas_proteicas.jpg','APROBADO',1),
+            (6,'Green Smoothie','Espinaca, piña, manzana verde y jengibre','Jugos y Licuados',30,55.00,'Extra_Naranja.jpg','APROBADO',3),
+            (7,'Limonada con Chía','Limonada natural con semillas de chía y stevia','Bebidas',40,35.00,'naranja_miel.jpg','APROBADO',3),
+            (8,'Palomitas de Aire','Palomitas de maíz sin aceite, con sal de mar y romero','Snacks Fit',50,25.00,'palomitas_aire.jpg','APROBADO',1),
+            (9,'Protein Shake','Licuado de proteína vegetal, plátano y leche de almendras','Jugos y Licuados',20,65.00,'leche_coco.jpg','APROBADO',3),
+            (10,'Ensalada de Atún (Propuesta)','Ensalada de atún fresco con mezcla de verdes, pepino y jitomate cherry','Ensaladas',40,45.00,'Deli_Tuna_CH.jpg','PENDIENTE',1),
+            (11,'Pack Protein Bars (Propuesta)','Pack 12 barritas proteicas sabor chocolate y vainilla','Snacks Fit',60,25.00,'Tentacion_CH.jpg','PENDIENTE',2),
+            (12,'Bowl de Frutos Rojos','Açaí, frutos rojos, granola, plátano y miel de agave','Bowls',18,95.00,'De_la_Casa_CH.jpg','APROBADO',5),
+            (13,'Wrap de Pollo Fit','Tortilla integral, pollo, espinaca, jitomate y aderezo yogurt','Ensaladas',22,69.00,'Wraps_Pollo.jpg','APROBADO',1),
+            (14,'Huevos Revueltos Fit','Huevos revueltos con espinaca, champiñones y pan integral','Proteína',20,59.00,'huevo_revueltos.jpg','APROBADO',6),
+            (15,'Batido de Mango','Mango, leche de coco y proteína vegetal','Jugos y Licuados',25,58.00,'Agua_especial.jpg','APROBADO',3),
+            (16,'Té Helado Natural','Té verde, limón y stevia, sin azúcar añadida','Bebidas',45,28.00,'Agua_del_Dia.jpg','APROBADO',6),
+            (17,'Almendras Especiadas','Almendras tostadas con romero y sal de mar','Snacks Fit',35,38.00,'Gelatina_light.jpg','APROBADO',4),
+            (18,'Bowl Energético','Quinoa, pollo, aguacate, mango y vinagreta cítrica','Bowls',15,99.00,'Gourmet_GDE.jpg','APROBADO',5),
+            (19,'Tostadas de Aguacate','Pan integral, aguacate, huevo poché y microverdes','Ensaladas',20,65.00,'avocado_toast.jpg','APROBADO',1),
+            (20,'Pechuga BBQ Light','Pechuga bañada en salsa BBQ sin azúcar, horneada','Proteína',18,85.00,'pechuga_asada.jpg','APROBADO',2),
+            (21,'Smoothie de Fresa','Fresa, plátano, leche de almendras y proteína','Jugos y Licuados',22,60.00,'Gourmet_CH.jpg','APROBADO',3),
+            (22,'Agua de Jamaica','Agua fresca de jamaica endulzada con stevia','Bebidas',50,20.00,'Agua_embotellada.jpg','APROBADO',6),
+            (23,'Mix Frutos Secos','Nuez, almendra, cacahuate y arándano deshidratado','Snacks Fit',40,35.00,'malangas_horneadas.jpg','APROBADO',4),
+            (24,'Chía Pudding','Pudín de chía con leche de coco y frutos rojos','Bowls',25,55.00,'De_la_Casa_GDE.jpg','APROBADO',5),
+            (25,'Wrap Vegetariano','Tortilla integral, hummus, verduras asadas y rúcula','Ensaladas',20,62.00,'toast_tres_quesos.jpg','APROBADO',6),
         ])
         seed.append('25 productos')
 
+        # Solo vincular en producto_proveedor los productos APROBADOS (los PENDIENTE se vinculan al aprobarse)
         prov_prods = [
-            (1,1),(1,2),(1,8),(1,13),(1,19),(2,3),(2,4),(2,5),(2,11),(2,20),
-            (3,6),(3,7),(3,9),(3,15),(3,21),(4,10),(4,17),(4,23),(5,12),(5,18),
-            (5,24),(6,14),(6,16),(6,22),(6,25),
+            (1,1),(1,2),(1,5),(1,8),(1,13),(1,19),
+            (2,3),(2,4),(2,20),
+            (3,6),(3,7),(3,9),(3,15),(3,21),
+            (4,17),(4,23),
+            (5,12),(5,18),(5,24),
+            (6,14),(6,16),(6,22),(6,25),
         ]
         c.executemany("INSERT INTO producto_proveedor (ID_PRODUCTO,ID_PROVEEDOR) VALUES (%s,%s)", prov_prods)
         seed.append(f'{len(prov_prods)} relaciones producto-proveedor')
