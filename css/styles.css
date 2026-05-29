@@ -2064,8 +2064,19 @@ canvas {
   max-width: 560px;
   padding: 0;
   border-radius: 16px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
   animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-producto-mejorado form {
+  padding: 1.5rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 @keyframes modalSlideIn {
@@ -2106,6 +2117,10 @@ canvas {
   flex-shrink: 0;
 }
 
+body.modal-abierto {
+  overflow: hidden;
+}
+
 .modal-producto-mejorado .cerrar-modal {
   color: white;
   top: 1.2rem;
@@ -2117,13 +2132,6 @@ canvas {
 .modal-producto-mejorado .cerrar-modal:hover {
   opacity: 1;
   color: white;
-}
-
-.modal-producto-mejorado form {
-  padding: 1.5rem 2rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .form-row {
@@ -2229,6 +2237,10 @@ canvas {
   padding: 0.5rem;
 }
 
+.image-upload-area.has-image:hover {
+  background: #f8fafc;
+}
+
 .image-upload-area input[type="file"] {
   display: none;
 }
@@ -2264,6 +2276,31 @@ canvas {
   border-radius: 8px;
   object-fit: contain;
   display: none;
+  pointer-events: none;
+}
+
+.image-upload-overlay {
+  display: none;
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.image-upload-area.has-image .image-upload-overlay {
+  display: block;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.image-upload-area.has-image .image-upload-overlay:hover {
+  background: rgba(0,0,0,0.8);
 }
 
 /* Modal Footer */
@@ -2426,6 +2463,9 @@ canvas {
     grid-template-columns: 1fr 1fr;
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> dayan
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -2437,7 +2477,10 @@ canvas {
     right: 1rem;
     max-width: none;
   }
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> dayan
 }
 
 /* --- MODAL NUEVA COMPRA PREMIUM --- */
@@ -2663,5 +2706,9 @@ canvas {
   background-color: #218838;
   box-shadow: 0 6px 15px rgba(40, 167, 69, 0.3);
   transform: translateY(-1px);
+<<<<<<< HEAD
+>>>>>>> dayan
+=======
+}
 >>>>>>> dayan
 }

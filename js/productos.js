@@ -44,19 +44,23 @@ function initProductoModal() {
   const uploadArea = document.getElementById("imageUploadArea");
   const fileInput = document.getElementById("imagen");
 
+  const abrirModal = () => {
+    modal.style.display = "flex";
+    document.body.classList.add("modal-abierto");
+    resetearModal();
+  };
+
   if (btnAbrir && modal) {
     if (getPuestoUsuario() !== 'Administrador') {
       btnAbrir.style.display = 'none';
     } else {
-      btnAbrir.addEventListener("click", () => {
-        modal.style.display = "flex";
-        resetearModal();
-      });
+      btnAbrir.addEventListener("click", abrirModal);
     }
   }
 
   const cerrarModal = () => {
     modal.style.display = "none";
+    document.body.classList.remove("modal-abierto");
     resetearModal();
   };
 
@@ -70,8 +74,10 @@ function initProductoModal() {
 
   if (uploadArea && fileInput) {
     uploadArea.addEventListener("click", (e) => {
-      if (e.target === fileInput) return;
-      fileInput.click();
+      if (e.target === fileInput || e.target.closest("#previewImagen")) return;
+      if (e.target.closest("#btnCambiarImagen") || !uploadArea.classList.contains("has-image")) {
+        fileInput.click();
+      }
     });
 
     fileInput.addEventListener("change", (e) => {
@@ -184,7 +190,7 @@ async function cargarProductos(categoria = null, pagina = 1, texto = "") {
         const badgeNuevo = prod.cantidad === 0 ? `<span class="badge-nuevo">Nuevo</span>` : "";
         card.innerHTML = `
           ${badgeNuevo}
-          <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" />
+          <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" onerror="this.style.display='none'" />
           <h3>${prod.nombre}</h3>
           <p class="desc">${prod.descripcion}</p>
           <p class="cantidad ${prod.cantidad <= 5 ? "stock-bajo" : ""}">
@@ -232,7 +238,10 @@ async function guardarProducto(e) {
     if (response.ok) {
       mostrarNotificacion("Producto guardado exitosamente", "success");
       const modal = document.getElementById("modalAgregarProducto");
-      if (modal) modal.style.display = "none";
+      if (modal) {
+        modal.style.display = "none";
+        document.body.classList.remove("modal-abierto");
+      }
       cargarProductos(categoriaActual, paginaActual);
     } else {
       const errData = await response.json().catch(() => ({}));
@@ -268,7 +277,7 @@ async function editarProducto(id) {
     form.nombre.value = prod.nombre || '';
     form.descripcion.value = prod.descripcion || '';
     form.precio.value = prod.precio || '';
-    form.cantidad.value = prod.cantidad || '';
+
     form.categoria.value = prod.categoria || '';
     document.getElementById("productoId").value = prod.ID_PRODUCTO || id;
     
@@ -285,7 +294,10 @@ async function editarProducto(id) {
       }
     }
 
-    if (modal) modal.style.display = "flex";
+    if (modal) {
+      modal.style.display = "flex";
+      document.body.classList.add("modal-abierto");
+    }
   } catch (err) {
     console.error("Error al cargar producto:", err);
     mostrarNotificacion("Error al cargar producto para edición.", "error");
