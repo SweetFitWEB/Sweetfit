@@ -242,6 +242,14 @@ async function descargarReporteGlobal(formato) {
   }
 }
 
+function formatearFecha(isoStr) {
+  if (!isoStr) return "";
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return isoStr;
+  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  return `${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
 function exportarCSV(data) {
   const { ventas, compras, totalVentas, totalCompras } = data;
   const fechaHoy = new Date().toLocaleDateString("es-MX", {
@@ -260,7 +268,7 @@ function exportarCSV(data) {
   csv += "===========================\n";
   csv += "Tipo,Fecha,Producto,Categoria,Cantidad,Precio Unitario,Subtotal\n";
   (ventas || []).forEach(v => {
-    csv += `Venta,${v.FECHA_VENTA},${v.producto},${v.CATEGORIA},${v.CANTIDAD_VENTA},${Number(v.PRECIO).toFixed(2)},${Number(v.SUBTOTAL_VENTA).toFixed(2)}\n`;
+    csv += `Venta,${formatearFecha(v.FECHA_VENTA)},${v.producto},${v.CATEGORIA},${v.CANTIDAD_VENTA},${Number(v.PRECIO).toFixed(2)},${Number(v.SUBTOTAL_VENTA).toFixed(2)}\n`;
   });
 
   // Compras
@@ -270,7 +278,7 @@ function exportarCSV(data) {
   csv += "===========================\n";
   csv += "Tipo,Fecha,Proveedor,Producto,Cantidad,Subtotal\n";
   (compras || []).forEach(c => {
-    csv += `Compra,${c.FECHA_COMPRA},${c.proveedor},${c.producto},${c.CANTIDAD_COMPRA},${Number(c.SUBTOTAL_COMPRA).toFixed(2)}\n`;
+    csv += `Compra,${formatearFecha(c.FECHA_COMPRA)},${c.proveedor},${c.producto},${c.CANTIDAD_COMPRA},${Number(c.SUBTOTAL_COMPRA).toFixed(2)}\n`;
   });
 
   // Totales
@@ -341,7 +349,7 @@ async function exportarPDF(data) {
 
   const headVentas = [["Fecha", "Producto", "Cat.", "Cant.", "Precio U.", "Subtotal"]];
   const bodyVentas = (data.ventas || []).map(v => [
-    v.FECHA_VENTA,
+    formatearFecha(v.FECHA_VENTA),
     v.producto,
     v.CATEGORIA,
     v.CANTIDAD_VENTA,
@@ -366,7 +374,7 @@ async function exportarPDF(data) {
 
   const headCompras = [["Fecha", "Proveedor", "Producto", "Cant.", "Subtotal"]];
   const bodyCompras = (data.compras || []).map(c => [
-    c.FECHA_COMPRA,
+    formatearFecha(c.FECHA_COMPRA),
     c.proveedor,
     c.producto,
     c.CANTIDAD_COMPRA,
@@ -383,6 +391,11 @@ async function exportarPDF(data) {
   });
 
   y = doc.lastAutoTable.finalY + 15;
+
+  // Línea separadora
+  doc.setDrawColor(150);
+  doc.line(14, y, pageWidth - 14, y);
+  y += 10;
 
   // ==== RESUMEN ====
   doc.setFont("helvetica", "bold");

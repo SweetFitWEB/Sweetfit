@@ -1547,7 +1547,7 @@ def obtener_reporte_completo():
                 p.NOMBRE AS producto,
                 p.CATEGORIA,
                 dv.CANTIDAD_VENTA,
-                p.PRECIO,
+                ROUND(dv.SUBTOTAL_VENTA / NULLIF(dv.CANTIDAD_VENTA, 0), 2) AS PRECIO,
                 dv.SUBTOTAL_VENTA
             FROM venta v
             JOIN detalle_venta dv ON v.ID_VENTA = dv.ID_VENTA
