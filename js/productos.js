@@ -188,7 +188,7 @@ async function cargarProductos(categoria = null, pagina = 1, texto = "") {
         const card = document.createElement("div");
         card.className = "producto-card";
         card.innerHTML = `
-          <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" />
+          <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" onerror="this.style.display='none'" />
           <h3>${prod.nombre}</h3>
           <p class="desc">${prod.descripcion}</p>
           <p class="cantidad ${prod.cantidad <= 5 ? "stock-bajo" : ""}">

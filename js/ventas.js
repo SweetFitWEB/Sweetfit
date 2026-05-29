@@ -80,7 +80,7 @@ async function cargarProductosParaVenta() {
           const card = document.createElement("div");
           card.className = "producto-venta-card";
           card.innerHTML = `
-            <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}">
+            <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" onerror="this.style.display='none'">
             <h3>${prod.nombre}</h3>
             <p>Precio: $${parseFloat(prod.precio).toFixed(2)}</p>
             <p class="stock-producto">Stock: ${prod.cantidad}</p>
@@ -138,7 +138,7 @@ async function cargarProductosModal(pagina = 1, texto = "") {
       const card = document.createElement("div");
       card.className = "producto-venta-card";
       card.innerHTML = `
-        <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}">
+        <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" onerror="this.style.display='none'">
         <h3>${prod.nombre}</h3>
         <p>Precio: $${parseFloat(prod.precio).toFixed(2)}</p>
         <p class="stock-producto">Stock: ${prod.cantidad}</p>
