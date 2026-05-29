@@ -39,18 +39,56 @@ function initProductoModal() {
   const modal = document.getElementById("modalAgregarProducto");
   const btnAbrir = document.querySelector(".btn-agregar-producto");
   const btnCerrar = document.getElementById("cerrarModal");
+  const btnCancelar = document.getElementById("btnCancelarModal");
   const form = document.getElementById("formAgregarProducto");
+  const uploadArea = document.getElementById("imageUploadArea");
+  const fileInput = document.getElementById("imagen");
 
   if (btnAbrir && modal) {
     if (getPuestoUsuario() !== 'Administrador') {
       btnAbrir.style.display = 'none';
     } else {
-      btnAbrir.addEventListener("click", () => modal.style.display = "block");
+      btnAbrir.addEventListener("click", () => {
+        modal.style.display = "flex";
+        resetearModal();
+      });
     }
   }
 
+  const cerrarModal = () => {
+    modal.style.display = "none";
+    resetearModal();
+  };
+
   if (btnCerrar && modal) {
-    btnCerrar.addEventListener("click", () => modal.style.display = "none");
+    btnCerrar.addEventListener("click", cerrarModal);
+  }
+
+  if (btnCancelar) {
+    btnCancelar.addEventListener("click", cerrarModal);
+  }
+
+  if (uploadArea && fileInput) {
+    uploadArea.addEventListener("click", (e) => {
+      if (e.target === fileInput) return;
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const preview = document.getElementById("previewImagen");
+          const placeholder = uploadArea.querySelector(".image-upload-placeholder");
+          preview.src = ev.target.result;
+          preview.style.display = "block";
+          if (placeholder) placeholder.style.display = "none";
+          uploadArea.classList.add("has-image");
+        };
+        reader.readAsDataURL(file);
+      }
+    });
   }
 
   if (form) {
@@ -58,8 +96,30 @@ function initProductoModal() {
   }
 
   window.addEventListener("click", (e) => {
-    if (e.target === modal) modal.style.display = "none";
+    if (e.target === modal) cerrarModal();
   });
+}
+
+function resetearModal() {
+  const form = document.getElementById("formAgregarProducto");
+  const preview = document.getElementById("previewImagen");
+  const uploadArea = document.getElementById("imageUploadArea");
+  const placeholder = uploadArea?.querySelector(".image-upload-placeholder");
+  const titulo = document.getElementById("tituloModal");
+  const btnGuardar = document.getElementById("btnGuardarProducto");
+
+  if (form) form.reset();
+  if (preview) {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+  if (placeholder) placeholder.style.display = "flex";
+  if (uploadArea) uploadArea.classList.remove("has-image");
+  if (titulo) titulo.textContent = "Agregar nuevo producto";
+  if (btnGuardar) {
+    btnGuardar.querySelector("span").textContent = "Guardar producto";
+    btnGuardar.disabled = false;
+  }
 }
 
 async function cargarCategorias() {
@@ -148,6 +208,8 @@ async function guardarProducto(e) {
   e.preventDefault();
   const formData = new FormData(e.target);
   const id = document.getElementById("productoId").value;
+  const btnGuardar = document.getElementById("btnGuardarProducto");
+  const spanBtn = btnGuardar?.querySelector("span");
 
   const url = id
     ? `${API}/api/editar_producto/${id}`
@@ -158,17 +220,30 @@ async function guardarProducto(e) {
     formData.append("_method", "PUT");
   }
 
+  if (btnGuardar) {
+    btnGuardar.disabled = true;
+    if (spanBtn) spanBtn.textContent = "Guardando...";
+  }
+
   try {
     const response = await fetch(url, { method, body: formData });
     if (response.ok) {
-      alert("Producto guardado");
-      e.target.reset();
+      mostrarNotificacion("Producto guardado exitosamente", "success");
       const modal = document.getElementById("modalAgregarProducto");
       if (modal) modal.style.display = "none";
       cargarProductos(categoriaActual, paginaActual);
+    } else {
+      const errData = await response.json().catch(() => ({}));
+      mostrarNotificacion(errData.error || "Error al guardar producto", "error");
     }
   } catch (error) {
     console.error("Error al guardar producto:", error);
+    mostrarNotificacion("Error de conexión al guardar producto", "error");
+  } finally {
+    if (btnGuardar) {
+      btnGuardar.disabled = false;
+      if (spanBtn) spanBtn.textContent = id ? "Guardar cambios" : "Guardar producto";
+    }
   }
 }
 
@@ -178,13 +253,15 @@ async function editarProducto(id) {
     const modal = document.getElementById("modalAgregarProducto");
     const form = document.getElementById("formAgregarProducto");
     const preview = document.getElementById("previewImagen");
-    const titulo = modal?.querySelector("h3");
-    const botonSubmit = form?.querySelector("button[type='submit']");
+    const titulo = document.getElementById("tituloModal");
+    const btnGuardar = document.getElementById("btnGuardarProducto");
+    const uploadArea = document.getElementById("imageUploadArea");
+    const placeholder = uploadArea?.querySelector(".image-upload-placeholder");
 
     if (!prod || !form) return;
 
     if (titulo) titulo.textContent = "Editar producto";
-    if (botonSubmit) botonSubmit.textContent = "Guardar cambios";
+    if (btnGuardar) btnGuardar.querySelector("span").textContent = "Guardar cambios";
 
     form.nombre.value = prod.nombre || '';
     form.descripcion.value = prod.descripcion || '';
@@ -193,19 +270,23 @@ async function editarProducto(id) {
     form.categoria.value = prod.categoria || '';
     document.getElementById("productoId").value = prod.ID_PRODUCTO || id;
     
-    if (preview) {
+    if (preview && uploadArea) {
       if (prod.imagen) {
         preview.src = `${API}/uploads/${prod.imagen}`;
         preview.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        uploadArea.classList.add("has-image");
       } else {
         preview.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'flex';
+        uploadArea.classList.remove("has-image");
       }
     }
 
     if (modal) modal.style.display = "flex";
   } catch (err) {
     console.error("Error al cargar producto:", err);
-    alert("Error al cargar producto para edición.");
+    mostrarNotificacion("Error al cargar producto para edición.", "error");
   }
 }
 
@@ -231,10 +312,11 @@ async function eliminarProducto(id) {
 
   try {
     await api(`/api/eliminar_producto/${id}`, { method: "DELETE" });
-    alert("Producto eliminado");
+    mostrarNotificacion("Producto eliminado", "success");
     cargarProductos(categoriaActual, paginaActual);
   } catch (error) {
     console.error("Error al eliminar producto:", error);
+    mostrarNotificacion("Error al eliminar producto", "error");
   }
 }
 
@@ -315,3 +397,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// ==========================================
+// Sistema de notificaciones
+// ==========================================
+function mostrarNotificacion(mensaje, tipo = "success") {
+  const container = document.getElementById("notificacionContainer") || (() => {
+    const c = document.createElement("div");
+    c.id = "notificacionContainer";
+    document.body.appendChild(c);
+    return c;
+  })();
+
+  const notif = document.createElement("div");
+  notif.className = `notificacion notificacion-${tipo}`;
+  notif.innerHTML = `
+    <span>${mensaje}</span>
+    <button class="notificacion-cerrar">&times;</button>
+  `;
+
+  notif.querySelector(".notificacion-cerrar").addEventListener("click", () => {
+    notif.remove();
+  });
+
+  container.appendChild(notif);
+
+  setTimeout(() => {
+    notif.classList.add("notificacion-salida");
+    setTimeout(() => notif.remove(), 300);
+  }, 3500);
+}
