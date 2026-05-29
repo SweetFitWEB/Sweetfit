@@ -99,7 +99,7 @@ function abrirModalProductos() {
   const modal = document.getElementById("modalSeleccionarProductos");
   if (!modal) return;
 
-  modal.style.display = "block";
+  modal.style.display = "flex";
 
   const buscador = document.getElementById("buscador-modal");
   if (buscador && !buscador.dataset.listener) {
@@ -499,11 +499,11 @@ function actualizarCarrito() {
       const row = tbody.insertRow();
       row.innerHTML = `
         <td>${item.nombre}</td>
-        <td>$${item.precio.toFixed(2)}</td>
         <td>
           <input type="number" value="${item.cantidad}" min="1" max="${item.stock}" 
                  onchange="actualizarCantidad(${item.id}, this.value)">
         </td>
+        <td>$${item.precio.toFixed(2)}</td>
         <td>$${(item.precio * item.cantidad).toFixed(2)}</td>
         <td><button onclick="eliminarDelCarrito(${item.id})">Eliminar</button></td>
       `;
@@ -513,7 +513,7 @@ function actualizarCarrito() {
   const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
   const totalElement = document.getElementById("totalVenta");
   if (totalElement) {
-    totalElement.textContent = `$${total.toFixed(2)}`;
+    totalElement.textContent = `${total.toFixed(2)}`;
   }
 }
 

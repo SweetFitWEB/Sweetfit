@@ -96,19 +96,27 @@
 </div>
 
 <!-- Modal para seleccionar productos -->
-<div class="modal-productos" id="modalSeleccionarProductos">
-  <div class="modal-productos-contenido">
-    <span class="cerrar-modal" onclick="cerrarModalProductos()">&times;</span>
-    <div class="modal-header">
-      <h3 class="titulo-modal">🛒 Selecciona los productos</h3>
-      <input type="text" id="buscador-modal" placeholder="🔍 Buscar producto..." />
+<div class="modal" id="modalSeleccionarProductos">
+  <div class="modal-contenido modal-productos-seleccion">
+    <div class="modal-producto-header">
+      <div class="modal-producto-icono">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <h3>Seleccionar Productos</h3>
+      <span class="cerrar-modal" onclick="cerrarModalProductos()">&times;</span>
     </div>
-    <div class="grid-modal-productos" id="gridModalProductos">
-      <!-- Tarjetas dinámicas -->
+    <div class="modal-productos-body">
+      <div class="modal-productos-buscador">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="buscador-modal" placeholder="Buscar producto..." />
+      </div>
+      <div class="grid-modal-productos" id="gridModalProductos">
+        <!-- Tarjetas dinámicas -->
+      </div>
+      <div class="contenedor-paginacion-modal">
+        <div id="paginacionModalProductos" class="paginacion-modal-productos"></div>
+      </div>
     </div>
-    <div class="contenedor-paginacion-modal">
-      <div id="paginacionModalProductos" class="paginacion-modal-productos"></div>
-    </div>      
   </div>
 </div>
 
