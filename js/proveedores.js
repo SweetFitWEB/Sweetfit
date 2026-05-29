@@ -236,6 +236,7 @@ async function guardarCompra(e) {
     
     alert("Compra registrada correctamente");
     document.getElementById("modalCompra").style.display = "none";
+    document.body.classList.remove("modal-abierto");
     e.target.reset();
     productosCompra = [];
     actualizarListaProductosCompra();
@@ -249,6 +250,7 @@ async function guardarCompra(e) {
 function cerrarModalCompra() {
   const modal = document.getElementById("modalCompra");
   if (modal) modal.style.display = "none";
+  document.body.classList.remove("modal-abierto");
 }
 window.cerrarModalCompra = cerrarModalCompra;
 
@@ -331,7 +333,8 @@ window.eliminarProductoCompra = eliminarProductoCompra;
 
 function abrirModalCompra() {
   const modal = document.getElementById("modalCompra");
-  if (modal) modal.style.display = "block";
+  if (modal) modal.style.display = "flex";
+  document.body.classList.add("modal-abierto");
 }
 
 async function cargarProductosProveedor() {
@@ -341,7 +344,7 @@ async function cargarProductosProveedor() {
   const idProveedor = selectProv.value;
   
   try {
-    const productos = await api(`/api/proveedores/${idProveedor}/productos`);
+    const productos = await api(`/api/productoproveedor/${idProveedor}`);
     const selectProd = document.getElementById("productoSelect");
     if (!selectProd) return;
 

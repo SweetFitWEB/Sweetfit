@@ -35,7 +35,6 @@ function initVentasPage() {
 
   cargarProductosParaVenta();
   cargarClientes();
-  cargarEmpleados();
   autocompletarEmpleado();
   if (typeof activarAutocompleteCliente === "function") {
     activarAutocompleteCliente();
@@ -191,14 +190,11 @@ async function cargarHistorialVentas() {
   const fechaInicio = document.getElementById("filtroFechaInicio")?.value;
   const fechaFin = document.getElementById("filtroFechaFin")?.value;
   const tipoVenta = document.getElementById("filtroTipo")?.value;
-  const empleado = document.getElementById("selectEmpleadoVenta")?.value;
-
   let url = "/api/ventas/historial";
   const params = new URLSearchParams();
   if (fechaInicio) params.append("fecha_inicio", fechaInicio);
   if (fechaFin) params.append("fecha_fin", fechaFin);
   if (tipoVenta) params.append("tipo_venta", tipoVenta.charAt(0).toUpperCase() + tipoVenta.slice(1).toLowerCase());
-  if (empleado) params.append("empleado", empleado);
   const qs = params.toString();
   if (qs) url += `?${qs}`;
 
@@ -221,7 +217,7 @@ async function cargarHistorialVentas() {
         : '';
       row.innerHTML = `
         <td>${venta.ID_VENTA ?? ""}</td>
-        <td>${venta.FECHA_VENTA ?? ""}</td>
+        <td>${venta.FECHA_VENTA ? new Date(venta.FECHA_VENTA).toLocaleString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</td>
         <td>${venta.TIPO_VENTA ?? ""}</td>
         <td>${venta.nombre_empleado ?? ""}</td>
         <td>$${parseFloat(venta.TOTAL_VENTA || 0).toFixed(2)}</td>
@@ -246,7 +242,7 @@ async function verDetalleVenta(idVenta) {
 
   try {
     const data = await api(`/api/ventas/${idVenta}`);
-    const fecha = data.fecha ? new Date(data.fecha).toLocaleDateString("es-ES", {
+    const fecha = data.fecha ? new Date(data.fecha).toLocaleString("es-MX", {
       year: "numeric", month: "long", day: "numeric",
       hour: "2-digit", minute: "2-digit"
     }) : "";
@@ -456,21 +452,6 @@ async function cargarClientes() {
     }
   } catch (error) {
     console.error("Error al cargar clientes:", error);
-  }
-}
-
-async function cargarEmpleados() {
-  try {
-    const data = await api("/empleados");
-    const select = document.getElementById("selectEmpleadoVenta");
-    if (select) {
-      select.innerHTML = '<option value="">Seleccionar empleado</option>';
-      data.forEach(emp => {
-        select.innerHTML += `<option value="${emp.ID_EMPLEADO}">${emp.NOMBRE}</option>`;
-      });
-    }
-  } catch (error) {
-    console.error("Error al cargar empleados:", error);
   }
 }
 

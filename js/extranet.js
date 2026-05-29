@@ -41,19 +41,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const idProducto = document.getElementById("extranetProductoId").value;
     const isNew = !idProducto;
     
-    let url = `/api/extranet/productos/${isNew ? proveedor.id : idProducto}`;
-    let method = isNew ? "POST" : "PUT";
-    
-    // Si es PUT, enviamos todo como json igual
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData);
+    const url = `/api/extranet/productos/${isNew ? proveedor.id : idProducto}`;
+    const method = isNew ? "POST" : "PUT";
+    const headers = { 'X-Proveedor-Id': proveedor.id, 'X-Proveedor-Email': proveedor.email };
     
     try {
-      await api(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      if (isNew) {
+        const fd = new FormData(form);
+        await fetch(`${window.location.origin}${url}`, { method, headers, body: fd });
+      } else {
+        const payload = { nombre: document.getElementById("extranetNombre").value, precio: document.getElementById("extranetPrecio").value };
+        await fetch(`${window.location.origin}${url}`, {
+          method, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(payload)
+        });
+      }
       alert(isNew ? "Producto propuesto exitosamente. Pendiente de aprobación." : "Producto actualizado.");
       modal.style.display = "none";
       cargarCatalogo(proveedor.id);
@@ -66,7 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function cargarCatalogo(idProveedor) {
   try {
-    const data = await api(`/api/extranet/productos/${idProveedor}`);
+    const data = await api(`/api/extranet/productos/${idProveedor}`, {
+      headers: { 'X-Proveedor-Id': idProveedor }
+    });
     const grid = document.getElementById("gridCatalogo");
     grid.innerHTML = "";
 
@@ -117,7 +120,10 @@ function editarProductoExtranet(id, nombre, precio) {
 async function eliminarProductoExtranet(idProducto, idProveedor) {
   if (!confirm("¿Estás seguro de quitar este producto de tu catálogo?")) return;
   try {
-    await api(`/api/extranet/productos/${idProducto}/${idProveedor}`, { method: 'DELETE' });
+    await api(`/api/extranet/productos/${idProducto}/${idProveedor}`, {
+      method: 'DELETE',
+      headers: { 'X-Proveedor-Id': idProveedor }
+    });
     cargarCatalogo(idProveedor);
   } catch (err) {
     alert("Error al eliminar");
