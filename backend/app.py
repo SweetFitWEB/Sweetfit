@@ -107,7 +107,8 @@ def crear_pedido_online():
         data = request.json
         nombre_cliente = data.get('nombre', 'Cliente Web')
         telefono = data.get('telefono', '')
-        tipo = data.get('tipo_pedido', 'App')  # Local, Domicilio, App
+        tipo = data.get('tipo_pedido', 'Local')
+        direccion = data.get('direccion', '')
         notas = data.get('notas', '')
         items = data.get('items', [])
 
@@ -137,11 +138,12 @@ def crear_pedido_online():
                 conn.close()
                 return jsonify({'error': f"Stock insuficiente para el producto '{prod['NOMBRE']}' (Disponible: {stock_actual}, Pedido: {cantidad_pedido})"}), 400
 
-        # Insertar venta
+        # Insertar venta con datos del cliente web
         cursor.execute("""
-            INSERT INTO venta (TIPO_VENTA, TOTAL_VENTA, ESTADO, ID_CLIENTE, ID_EMPLEADO)
-            VALUES (%s, %s, 'EN ESPERA', NULL, NULL)
-        """, (tipo, total))
+            INSERT INTO venta (TIPO_VENTA, TOTAL_VENTA, ESTADO, ID_CLIENTE, ID_EMPLEADO,
+                               NOMBRE_CLIENTE_WEB, TELEFONO_CLIENTE_WEB, DIRECCION_CLIENTE_WEB, NOTAS_PEDIDO)
+            VALUES (%s, %s, 'EN ESPERA', NULL, NULL, %s, %s, %s, %s)
+        """, (tipo, total, nombre_cliente, telefono, direccion, notas))
         id_venta = cursor.lastrowid
 
         # Insertar detalle_venta y descontar stock
@@ -828,6 +830,7 @@ def obtener_detalles_venta(id_venta):
         # Obtener info cliente, venta y empleado
         query_venta = """
             SELECT v.ID_VENTA, v.FECHA_VENTA, v.TIPO_VENTA, v.TOTAL_VENTA, v.ESTADO,
+                   v.NOMBRE_CLIENTE_WEB, v.TELEFONO_CLIENTE_WEB, v.DIRECCION_CLIENTE_WEB, v.NOTAS_PEDIDO,
                    c.ID_CLIENTE, c.NOMBRE AS cliente_nombre, c.APELLIDO_PATERNO AS cliente_apellido_paterno,
                    c.APELLIDO_MATERNO AS cliente_apellido_materno, c.DIRECCION AS cliente_direccion,
                    c.TELEFONO AS cliente_telefono,
@@ -856,12 +859,16 @@ def obtener_detalles_venta(id_venta):
         cursor.close()
         conn.close()
 
-        # Construir cliente como nombre completo
-        cliente_nombre_completo = " ".join(filter(None, [
-            venta.get("cliente_nombre"),
-            venta.get("cliente_apellido_paterno"),
-            venta.get("cliente_apellido_materno")
-        ])).strip() or "Cliente desconocido"
+        # Si es pedido web, usar datos guardados en la venta
+        es_pedido_web = venta.get("NOMBRE_CLIENTE_WEB") is not None
+        if es_pedido_web:
+            cliente_nombre_completo = venta["NOMBRE_CLIENTE_WEB"]
+        else:
+            cliente_nombre_completo = " ".join(filter(None, [
+                venta.get("cliente_nombre"),
+                venta.get("cliente_apellido_paterno"),
+                venta.get("cliente_apellido_materno")
+            ])).strip() or "Cliente desconocido"
 
         # Construir empleado como nombre completo
         empleado_nombre_completo = " ".join(filter(None, [
@@ -882,6 +889,10 @@ def obtener_detalles_venta(id_venta):
             "direccion": venta.get("cliente_direccion", ""),
             "telefono": venta.get("cliente_telefono", ""),
             "tipo_venta": venta.get("TIPO_VENTA", ""),
+            "es_pedido_web": es_pedido_web,
+            "telefono_web": venta.get("TELEFONO_CLIENTE_WEB", ""),
+            "direccion_web": venta.get("DIRECCION_CLIENTE_WEB", ""),
+            "notas_web": venta.get("NOTAS_PEDIDO", ""),
             "detallesV": [
                 {
                     "ID_PRODUCTO": item["ID_PRODUCTO"],              # ¡Aquí está el ID correcto!
@@ -1084,10 +1095,10 @@ def obtener_proveedores():
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
         if nombre:
-            query = "SELECT * FROM proveedor WHERE LOWER(NOMBRE) LIKE %s"
+            query = "SELECT ID_PROVEEDOR, NOMBRE, EMAIL, TELEFONO FROM proveedor WHERE LOWER(NOMBRE) LIKE %s"
             cursor.execute(query, (f"%{nombre}%",))
         else:
-            cursor.execute("SELECT * FROM proveedor")
+            cursor.execute("SELECT ID_PROVEEDOR, NOMBRE, EMAIL, TELEFONO FROM proveedor")
 
         proveedores = cursor.fetchall()
         cursor.close()
@@ -1130,11 +1141,12 @@ def agregar_proveedor():
         nombre = data.get('nombre')
         email = data.get('email')
         telefono = data.get('telefono')
+        contrasena = data.get('contrasena')
 
         conn = get_db()
         cursor = conn.cursor()
-        query = "INSERT INTO proveedor (NOMBRE, EMAIL, TELEFONO) VALUES (%s, %s, %s)"
-        cursor.execute(query, (nombre, email, telefono))
+        query = "INSERT INTO proveedor (NOMBRE, EMAIL, TELEFONO, CONTRASEÑA) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (nombre, email, telefono, generate_password_hash(contrasena) if contrasena else None))
         conn.commit()
         cursor.close()
         conn.close()
@@ -1168,18 +1180,28 @@ def actualizar_proveedor(id_proveedor):
         return jsonify({'error': 'Acceso denegado'}), 403
     try:
         data = request.json
-        nombre =data.get('nombre')
+        nombre = data.get('nombre')
         email = data.get('email')
         telefono = data.get('telefono')
+        contrasena = data.get('contrasena')
 
         conn = get_db()
         cursor = conn.cursor()
-        query = """
-                UPDATE PROVEEDOR
-                SET NOMBRE = %s, EMAIL = %s, TELEFONO = %s
-                WHERE ID_PROVEEDOR = %s
-        """
-        cursor.execute(query, (nombre, email, telefono, id_proveedor))
+
+        if contrasena:
+            query = """
+                    UPDATE PROVEEDOR
+                    SET NOMBRE = %s, EMAIL = %s, TELEFONO = %s, CONTRASEÑA = %s
+                    WHERE ID_PROVEEDOR = %s
+            """
+            cursor.execute(query, (nombre, email, telefono, generate_password_hash(contrasena), id_proveedor))
+        else:
+            query = """
+                    UPDATE PROVEEDOR
+                    SET NOMBRE = %s, EMAIL = %s, TELEFONO = %s
+                    WHERE ID_PROVEEDOR = %s
+            """
+            cursor.execute(query, (nombre, email, telefono, id_proveedor))
         conn.commit()
         cursor.close()
         conn.close()
@@ -1983,6 +2005,36 @@ Database: {os.environ.get('DB_NAME', 'sweetfit')}
 </pre>
 <p>Usa estos datos en DBeaver > New Connection > MySQL</p>'''
 
+@app.route('/db/migrate')
+def db_migrate():
+    """Agrega columnas para pedidos web a la tabla venta si no existen."""
+    resultados = []
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        migraciones = [
+            "ALTER TABLE venta ADD COLUMN NOMBRE_CLIENTE_WEB VARCHAR(255)",
+            "ALTER TABLE venta ADD COLUMN TELEFONO_CLIENTE_WEB VARCHAR(20)",
+            "ALTER TABLE venta ADD COLUMN NOTAS_PEDIDO TEXT",
+            "ALTER TABLE venta ADD COLUMN DIRECCION_CLIENTE_WEB TEXT"
+        ]
+        for sql in migraciones:
+            try:
+                c.execute(sql)
+                col = sql.split("ADD COLUMN ")[1].split(" ")[0]
+                resultados.append(f"Columna {col} agregada")
+            except Exception as e:
+                if "Duplicate column" in str(e):
+                    resultados.append(f"Columna ya existe")
+                else:
+                    resultados.append(f"Error: {e}")
+        conn.commit()
+        c.close()
+        conn.close()
+        return jsonify({"mensaje": "Migración completada", "detalles": resultados})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/db/seed')
 def db_seed():
     from werkzeug.security import generate_password_hash
@@ -1999,6 +2051,24 @@ def db_seed():
         c.execute("SET FOREIGN_KEY_CHECKS = 1")
 
         c.execute("ALTER TABLE empleado MODIFY CONTRASEÑA VARCHAR(255)")
+
+        # Agregar columnas para datos de pedidos web si no existen
+        try:
+            c.execute("ALTER TABLE venta ADD COLUMN NOMBRE_CLIENTE_WEB VARCHAR(255)")
+        except:
+            pass
+        try:
+            c.execute("ALTER TABLE venta ADD COLUMN TELEFONO_CLIENTE_WEB VARCHAR(20)")
+        except:
+            pass
+        try:
+            c.execute("ALTER TABLE venta ADD COLUMN NOTAS_PEDIDO TEXT")
+        except:
+            pass
+        try:
+            c.execute("ALTER TABLE venta ADD COLUMN DIRECCION_CLIENTE_WEB TEXT")
+        except:
+            pass
         c.executemany("INSERT INTO empleado (ID_EMPLEADO,NOMBRE,APELLIDOS,EMAIL,CONTRASEÑA,PUESTO) VALUES (%s,%s,%s,%s,%s,%s)", [
             (1,'Admin','Sweetfit','admin@sweetfit.com',generate_password_hash('admin123'),'Administrador'),
             (2,'Cajero','Sweetfit','cajero@sweetfit.com',generate_password_hash('cajero123'),'Cajero'),

@@ -121,13 +121,17 @@
     const pedido = JSON.parse(localStorage.getItem('sweetfit_ultimo_pedido') || '{}');
     const info = document.getElementById('infoPedido');
 
-    const tipos = { 'Local': '🪑 Para comer aquí', 'Domicilio': '🛵 A domicilio', 'App': '📱 Para llevar' };
+    const tipos = { 'Local': '🪑 Para comer aquí', 'Domicilio': '🛵 A domicilio' };
 
     if (pedido.id) {
+      const direccionHtml = pedido.direccion
+        ? `<div class="fila"><span>Dirección</span><span style="font-weight:400;font-size:0.85rem;text-align:right;max-width:60%;">${pedido.direccion}</span></div>`
+        : '';
       info.innerHTML = `
         <div class="fila"><span>Folio de pedido</span><span class="folio">#${pedido.id}</span></div>
         <div class="fila"><span>Cliente</span><span>${pedido.nombre || 'Cliente Web'}</span></div>
         <div class="fila"><span>Tipo</span><span><span class="badge-tipo">${tipos[pedido.tipo] || pedido.tipo}</span></span></div>
+        ${direccionHtml}
         <div class="fila"><span>Total</span><span>$${parseFloat(pedido.total || 0).toFixed(2)}</span></div>
       `;
     } else {

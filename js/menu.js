@@ -227,6 +227,21 @@ function cerrarCarrito() {
   document.body.style.overflow = '';
 }
 
+/* ── Mostrar/ocultar campos de dirección ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const tipoSelect = document.getElementById('pedidoTipo');
+  if (tipoSelect) {
+    tipoSelect.addEventListener('change', () => {
+      const dirFields = document.getElementById('direccionFields');
+      if (dirFields) {
+        dirFields.style.display = tipoSelect.value === 'Domicilio' ? 'block' : 'none';
+        const inputs = dirFields.querySelectorAll('input');
+        inputs.forEach(inp => inp.required = tipoSelect.value === 'Domicilio');
+      }
+    });
+  }
+});
+
 /* ── Modal pedido ── */
 function abrirModalPedido() {
   if (carrito.length === 0) {
@@ -257,10 +272,20 @@ async function enviarPedido(e) {
   btn.disabled = true;
   btn.textContent = 'Enviando...';
 
+  const tipo = document.getElementById('pedidoTipo').value;
+  let direccion = '';
+  if (tipo === 'Domicilio') {
+    const calle = document.getElementById('pedidoCalle').value.trim();
+    const colonia = document.getElementById('pedidoColonia').value.trim();
+    const referencia = document.getElementById('pedidoReferencia').value.trim();
+    direccion = [calle, colonia, referencia].filter(Boolean).join(', ');
+  }
+
   const payload = {
     nombre: document.getElementById('pedidoNombre').value.trim(),
     telefono: document.getElementById('pedidoTelefono').value.trim(),
-    tipo_pedido: document.getElementById('pedidoTipo').value,
+    tipo_pedido: tipo,
+    direccion: direccion,
     notas: document.getElementById('pedidoNotas').value.trim(),
     items: carrito.map(i => ({
       id_producto: i.id_producto,
@@ -288,7 +313,8 @@ async function enviarPedido(e) {
       id: data.id_pedido,
       total: data.total,
       nombre: data.nombre_cliente,
-      tipo: payload.tipo_pedido
+      tipo: payload.tipo_pedido,
+      direccion: payload.direccion
     }));
     window.location.href = `pedido_confirmado.html`;
 

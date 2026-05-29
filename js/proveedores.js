@@ -45,16 +45,16 @@ let productosCompra = [];
 
 function initProveedorModal() {
   const modal = document.getElementById("modalProveedor");
-  const btnAbrir = document.querySelector(".btn-agregar-proveedor");
-  const btnCerrar = document.querySelector(".cerrar-modal-proveedor");
+  const btnCerrar = document.getElementById("cerrarModalProveedor");
   const form = document.getElementById("formProveedor");
-
-  if (btnAbrir && modal) {
-    btnAbrir.addEventListener("click", () => modal.style.display = "block");
-  }
+  const cancelarBtn = document.getElementById("cancelarEdicion");
 
   if (btnCerrar && modal) {
     btnCerrar.addEventListener("click", () => modal.style.display = "none");
+  }
+
+  if (cancelarBtn && modal) {
+    cancelarBtn.addEventListener("click", () => modal.style.display = "none");
   }
 
   if (form) {
@@ -78,13 +78,18 @@ async function guardarProveedor(e) {
   const method = id ? "PUT" : "POST";
 
   try {
-    await api(url, { method, body: JSON.stringify(Object.fromEntries(formData)) });
+    await api(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.fromEntries(formData))
+    });
     alert("Proveedor guardado");
     e.target.reset();
     document.getElementById("modalProveedor").style.display = "none";
     cargarProveedores();
   } catch (error) {
     console.error("Error al guardar proveedor:", error);
+    alert("Error al guardar proveedor");
   }
 }
 
@@ -134,7 +139,16 @@ function cargarSelectProveedores(proveedores) {
 }
 
 function abrirModalProveedor() {
-  document.getElementById("modalProveedor").style.display = "block";
+  const modal = document.getElementById("modalProveedor");
+  const form = document.getElementById("formProveedor");
+  const titulo = document.getElementById("tituloModalProveedor");
+  if (form) {
+    form.reset();
+    if (form.id_proveedor) form.id_proveedor.value = "";
+    if (form.contrasena) form.contrasena.required = true;
+  }
+  if (titulo) titulo.textContent = "Agregar Proveedor";
+  if (modal) modal.style.display = "flex";
 }
 
 async function cargarHistorialCompras() {
@@ -353,13 +367,14 @@ function editarProveedor(id) {
 
   const modal = document.getElementById("modalProveedor");
   const form = document.getElementById("formProveedor");
-  const titulo = modal?.querySelector("h3");
+  const titulo = document.getElementById("tituloModalProveedor");
 
   if (form) {
     if (form.id_proveedor) form.id_proveedor.value = prov.ID_PROVEEDOR;
     if (form.nombre) form.nombre.value = prov.NOMBRE || "";
     if (form.email) form.email.value = prov.EMAIL || "";
     if (form.telefono) form.telefono.value = prov.TELEFONO || "";
+    if (form.contrasena) { form.contrasena.value = ""; form.contrasena.required = false; }
   }
 
   if (titulo) titulo.textContent = "Editar Proveedor";

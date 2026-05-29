@@ -431,8 +431,13 @@ body {
   background: rgba(0,0,0,0.55);
   z-index: 300;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-pedido.abierto {
+  display: flex;
 }
 
 .modal-pedido.abierto { display: flex; }
@@ -446,6 +451,8 @@ body {
   box-shadow: 0 20px 60px rgba(0,0,0,0.25);
   position: relative;
   animation: fadeInUp 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 @keyframes fadeInUp {
@@ -501,6 +508,15 @@ body {
 }
 
 .form-pedido textarea { resize: vertical; min-height: 70px; }
+
+#direccionFields {
+  animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 .resumen-pedido {
   background: var(--beige);
