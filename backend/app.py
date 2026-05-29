@@ -166,7 +166,7 @@ def obtener_productos():
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
 
-        filtros = ["ESTADO_APROBACION = 'APROBADO'"]
+        filtros = ["ESTADO_APROBACION IN ('APROBADO', 'EN_EDICION')"]
         valores = []
 
         if categoria:
@@ -212,7 +212,8 @@ def obtener_productos():
             'categoria': p['CATEGORIA'],
             'cantidad': p['CANTIDAD'],
             'precio': float(p['PRECIO']),
-            'imagen': p['IMAGEN']
+            'imagen': p['IMAGEN'],
+            'ESTADO_APROBACION': p.get('ESTADO_APROBACION', 'APROBADO')
         } for p in productos_crudos ]
 
         return jsonify({
@@ -1931,6 +1932,8 @@ def aprobar_producto(id_producto):
         if estado == 'RECHAZADO':
             cursor.execute("DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s", (id_producto,))
             cursor.execute("DELETE FROM producto WHERE ID_PRODUCTO = %s", (id_producto,))
+        elif estado == 'APROBADO':
+            cursor.execute("UPDATE producto SET ESTADO_APROBACION = 'EN_EDICION' WHERE ID_PRODUCTO = %s", (id_producto,))
         else:
             cursor.execute("UPDATE producto SET ESTADO_APROBACION = %s WHERE ID_PRODUCTO = %s", (estado, id_producto))
 
@@ -1938,6 +1941,22 @@ def aprobar_producto(id_producto):
         cursor.close()
         conn.close()
         return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/productos/<int:id_producto>/publicar', methods=['PUT'])
+def publicar_producto(id_producto):
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE producto SET ESTADO_APROBACION = 'APROBADO' WHERE ID_PRODUCTO = %s", (id_producto,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({'success': True, 'mensaje': 'Producto publicado en el menú'})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
