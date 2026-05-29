@@ -1945,7 +1945,7 @@ def extranet_editar_producto(id_producto):
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT 1 FROM producto_proveedor WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s", (id_producto, prov_id))
+        cursor.execute("SELECT 1 FROM producto WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s", (id_producto, prov_id))
         if not cursor.fetchone():
             cursor.close()
             conn.close()

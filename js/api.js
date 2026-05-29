@@ -9,6 +9,11 @@ async function api(endpoint, options = {}) {
     options.headers['X-User-Role'] = usuario.puesto;
     options.headers['X-User-Id'] = usuario.id;
   }
+  const proveedor = getProveedorData();
+  if (proveedor) {
+    options.headers = options.headers || {};
+    options.headers['X-Proveedor-Id'] = proveedor.id;
+  }
   const res = await fetch(`${API}${endpoint}`, options);
 
   if (!res.ok) {
@@ -39,4 +44,13 @@ function isAutenticado() {
 function getPuestoUsuario() {
   const usuario = getUsuarioData();
   return usuario?.puesto || null;
+}
+
+function getProveedorData() {
+  try {
+    const data = JSON.parse(localStorage.getItem("proveedor_session"));
+    return data || null;
+  } catch (error) {
+    return null;
+  }
 }
