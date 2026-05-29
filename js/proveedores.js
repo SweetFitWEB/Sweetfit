@@ -150,21 +150,26 @@ async function cargarHistorialCompras() {
 }
 
 function mostrarHistorialCompras(compras) {
-  const tabla = document.getElementById("tablaCompras");
-  if (!tabla) return;
+  const contenedor = document.getElementById("tablaHistorialCompras");
+  if (!contenedor) return;
 
-  const tbody = tabla.querySelector("tbody") || tabla.createTBody();
-  tbody.innerHTML = "";
+  contenedor.innerHTML = "";
+
+  if (compras.length === 0) {
+    contenedor.innerHTML = '<p style="text-align:center;color:#666;padding:2rem;">No hay compras registradas</p>';
+    return;
+  }
 
   compras.forEach(compra => {
-    const row = tbody.insertRow();
-    row.innerHTML = `
-      <td>${compra.fecha}</td>
-      <td>${compra.proveedor}</td>
-      <td>$${parseFloat(compra.total).toFixed(2)}</td>
-      <td>${compra.estado}</td>
-      <td><button class="btn-ver" onclick="mostrarTicketCompra(${compra.id_compra})">Ver</button></td>
+    const card = document.createElement("div");
+    card.className = "compra-item";
+    card.innerHTML = `
+      <p><strong>${compra.nombre_proveedor || 'Proveedor'}</strong></p>
+      <p><i class="fi fi-br-calendar"></i> ${compra.fecha || ''}</p>
+      <p><strong>Total:</strong> $${parseFloat(compra.total || 0).toFixed(2)}</p>
+      <button class="btn-ticket" onclick="mostrarTicketCompra(${compra.id_compra})">Ver ticket</button>
     `;
+    contenedor.appendChild(card);
   });
 }
 
