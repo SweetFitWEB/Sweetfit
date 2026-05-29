@@ -221,7 +221,7 @@ async function cargarHistorialVentas() {
         : '';
       row.innerHTML = `
         <td>${venta.ID_VENTA ?? ""}</td>
-        <td>${venta.FECHA_VENTA ?? ""}</td>
+        <td>${venta.FECHA_VENTA ? new Date(venta.FECHA_VENTA).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""}</td>
         <td>${venta.TIPO_VENTA ?? ""}</td>
         <td>${venta.nombre_empleado ?? ""}</td>
         <td>$${parseFloat(venta.TOTAL_VENTA || 0).toFixed(2)}</td>

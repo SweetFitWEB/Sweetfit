@@ -179,7 +179,7 @@ async function mostrarHistorialCliente(idCliente) {
           }
 
           ventaDiv.innerHTML = `
-            <p><strong>Fecha:</strong> ${new Date(venta.FECHA_VENTA).toLocaleString()}</p>
+            <p><strong>Fecha:</strong> ${new Date(venta.FECHA_VENTA).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" })}</p>
             <p><strong>Total:</strong> $${parseFloat(venta.TOTAL_VENTA).toFixed(2)}</p>
             <p><strong>Tipo:</strong> <span style="color:${tipoColor}; font-weight: bold;">${tipoIcono} ${venta.TIPO_VENTA}</span></p>
             <hr>
