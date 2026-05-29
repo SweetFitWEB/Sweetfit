@@ -246,7 +246,7 @@ async function verDetalleVenta(idVenta) {
 
   try {
     const data = await api(`/api/ventas/${idVenta}`);
-    const fecha = data.fecha ? new Date(data.fecha).toLocaleDateString("es-ES", {
+    const fecha = data.fecha ? new Date(data.fecha).toLocaleString("es-MX", {
       year: "numeric", month: "long", day: "numeric",
       hour: "2-digit", minute: "2-digit"
     }) : "";
@@ -461,7 +461,7 @@ async function cargarClientes() {
 
 async function cargarEmpleados() {
   try {
-    const data = await api("/empleados");
+    const data = await api("/api/empleados");
     const select = document.getElementById("selectEmpleadoVenta");
     if (select) {
       select.innerHTML = '<option value="">Seleccionar empleado</option>';
