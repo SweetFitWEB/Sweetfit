@@ -1286,6 +1286,8 @@ h3 {
 
 .modal-contenido.grande {
   max-width: 800px;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .cerrar-modal {
