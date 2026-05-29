@@ -44,19 +44,23 @@ function initProductoModal() {
   const uploadArea = document.getElementById("imageUploadArea");
   const fileInput = document.getElementById("imagen");
 
+  const abrirModal = () => {
+    modal.style.display = "flex";
+    document.body.classList.add("modal-abierto");
+    resetearModal();
+  };
+
   if (btnAbrir && modal) {
     if (getPuestoUsuario() !== 'Administrador') {
       btnAbrir.style.display = 'none';
     } else {
-      btnAbrir.addEventListener("click", () => {
-        modal.style.display = "flex";
-        resetearModal();
-      });
+      btnAbrir.addEventListener("click", abrirModal);
     }
   }
 
   const cerrarModal = () => {
     modal.style.display = "none";
+    document.body.classList.remove("modal-abierto");
     resetearModal();
   };
 
@@ -230,7 +234,10 @@ async function guardarProducto(e) {
     if (response.ok) {
       mostrarNotificacion("Producto guardado exitosamente", "success");
       const modal = document.getElementById("modalAgregarProducto");
-      if (modal) modal.style.display = "none";
+      if (modal) {
+        modal.style.display = "none";
+        document.body.classList.remove("modal-abierto");
+      }
       cargarProductos(categoriaActual, paginaActual);
     } else {
       const errData = await response.json().catch(() => ({}));
@@ -283,7 +290,10 @@ async function editarProducto(id) {
       }
     }
 
-    if (modal) modal.style.display = "flex";
+    if (modal) {
+      modal.style.display = "flex";
+      document.body.classList.add("modal-abierto");
+    }
   } catch (err) {
     console.error("Error al cargar producto:", err);
     mostrarNotificacion("Error al cargar producto para edición.", "error");

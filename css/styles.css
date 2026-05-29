@@ -2049,8 +2049,19 @@ canvas {
   max-width: 560px;
   padding: 0;
   border-radius: 16px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
   animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-producto-mejorado form {
+  padding: 1.5rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 @keyframes modalSlideIn {
@@ -2091,6 +2102,10 @@ canvas {
   flex-shrink: 0;
 }
 
+body.modal-abierto {
+  overflow: hidden;
+}
+
 .modal-producto-mejorado .cerrar-modal {
   color: white;
   top: 1.2rem;
@@ -2102,13 +2117,6 @@ canvas {
 .modal-producto-mejorado .cerrar-modal:hover {
   opacity: 1;
   color: white;
-}
-
-.modal-producto-mejorado form {
-  padding: 1.5rem 2rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .form-row {
