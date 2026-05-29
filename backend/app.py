@@ -1926,11 +1926,7 @@ def extranet_agregar_producto(id_proveedor):
         INSERT INTO producto (NOMBRE, DESCRIPCION, CATEGORIA, CANTIDAD, PRECIO, IMAGEN, ESTADO_APROBACION, ID_PROVEEDOR)
         VALUES (%s, %s, %s, %s, %s, %s, 'PENDIENTE', %s)
         """
-<<<<<<< HEAD
-        cursor.execute(query_prod, (nombre, descripcion, categoria, cantidad, precio, imagen, id_proveedor))
-=======
-        cursor.execute(query_prod, (nombre, descripcion, categoria, 0, precio, filename))
->>>>>>> bb77722d4179b47229964e1c0b5133bf97e29a88
+        cursor.execute(query_prod, (nombre, descripcion, categoria, 0, precio, filename, id_proveedor))
         id_producto = cursor.lastrowid
         
         conn.commit()
@@ -1974,13 +1970,7 @@ def extranet_eliminar_producto(id_producto, id_proveedor):
     try:
         conn = get_db()
         cursor = conn.cursor()
-<<<<<<< HEAD
         cursor.execute("DELETE FROM producto WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s", (id_producto, id_proveedor))
-        # (producto_proveedor se borra por CASCADE)
-=======
-        query_unlink = "DELETE FROM producto_proveedor WHERE ID_PRODUCTO = %s AND ID_PROVEEDOR = %s"
-        cursor.execute(query_unlink, (id_producto, id_proveedor))
->>>>>>> bb77722d4179b47229964e1c0b5133bf97e29a88
         conn.commit()
         cursor.close()
         conn.close()

@@ -29,22 +29,19 @@ c.executemany("INSERT INTO proveedor (ID_PROVEEDOR,EMAIL,TELEFONO,NOMBRE,CONTRAS
 
 # 5. Productos fit
 prods = [
-    (1,  'Ensalada Caesar Fit',   'Lechuga romana, pollo grillé, crutones integrales, aderezo light',     'Ensaladas',        25, 79.00, 'aderezo.jpg', 'APROBADO'),
-    (2,  'Bowl Verde',            'Quinoa, espinaca, aguacate, pepino, brócoli y vinagreta de limón',      'Bowls',            20, 89.00, 'aguacate.jpg', 'APROBADO'),
-    (3,  'Pechuga Empanizada',    'Pechuga de pollo empanizada con avena, horneada no frita',               'Proteína',         30, 79.00, 'pechuga.jpg', 'APROBADO'),
-    (4,  'Salmón a la Plancha',   'Filete de salmón fresco con especias y vegetales salteados',             'Proteína',         15, 119.00, 'atun.jpg', 'APROBADO'),
-    (5,  'Barrita Proteica',      'Barrita de proteína vegetal, sin azúcar añadida',                        'Snacks Fit',       50, 29.00, 'barritas_proteicas.jpg', 'APROBADO'),
-    (6,  'Green Smoothie',        'Espinaca, piña, manzana verde y jengibre',                                'Jugos y Licuados', 30, 55.00, 'Extra_Naranja.jpg', 'APROBADO'),
-    (7,  'Limonada con Chía',     'Limonada natural con semillas de chía y stevia',                         'Bebidas',          40, 35.00, 'naranja_miel.jpg', 'APROBADO'),
-    (8,  'Palomitas de Aire',     'Palomitas de maíz sin aceite, con sal de mar y romero',                  'Snacks Fit',       50, 25.00, 'palomitas_aire.jpg', 'APROBADO'),
-    (9,  'Protein Shake',         'Licuado de proteína vegetal, plátano y leche de almendras',              'Jugos y Licuados', 20, 65.00, 'leche_coco.jpg', 'APROBADO'),
-    (10, 'Ensalada de Atún (Propuesta)', 'Ensalada de atún fresco con mezcla de verdes, pepino y jitomate cherry', 'Ensaladas', 40, 45.00, 'Deli_Tuna_CH.jpg', 'PENDIENTE'),
-    (11, 'Pack Protein Bars (Propuesta)', 'Pack 12 barritas proteicas sabor chocolate y vainilla',          'Snacks Fit',       60, 25.00, 'barritas_proteicas.jpg', 'PENDIENTE'),
+    (1,  'Ensalada Caesar Fit',   'Lechuga romana, pollo grillé, crutones integrales, aderezo light',     'Ensaladas',        25, 79.00, 'aderezo.jpg', 'APROBADO', 1),
+    (2,  'Bowl Verde',            'Quinoa, espinaca, aguacate, pepino, brócoli y vinagreta de limón',      'Bowls',            20, 89.00, 'aguacate.jpg', 'APROBADO', NULL),
+    (3,  'Pechuga Empanizada',    'Pechuga de pollo empanizada con avena, horneada no frita',               'Proteína',         30, 79.00, 'pechuga.jpg', 'APROBADO', 2),
+    (4,  'Salmón a la Plancha',   'Filete de salmón fresco con especias y vegetales salteados',             'Proteína',         15, 119.00, 'atun.jpg', 'APROBADO', NULL),
+    (5,  'Barrita Proteica',      'Barrita de proteína vegetal, sin azúcar añadida',                        'Snacks Fit',       50, 29.00, 'barritas_proteicas.jpg', 'APROBADO', 1),
+    (6,  'Green Smoothie',        'Espinaca, piña, manzana verde y jengibre',                                'Jugos y Licuados', 30, 55.00, 'Extra_Naranja.jpg', 'APROBADO', 1),
+    (7,  'Limonada con Chía',     'Limonada natural con semillas de chía y stevia',                         'Bebidas',          40, 35.00, 'naranja_miel.jpg', 'APROBADO', NULL),
+    (8,  'Palomitas de Aire',     'Palomitas de maíz sin aceite, con sal de mar y romero',                  'Snacks Fit',       50, 25.00, 'palomitas_aire.jpg', 'APROBADO', NULL),
+    (9,  'Protein Shake',         'Licuado de proteína vegetal, plátano y leche de almendras',              'Jugos y Licuados', 20, 65.00, 'leche_coco.jpg', 'APROBADO', NULL),
+    (10, 'Ensalada de Atún (Propuesta)', 'Ensalada de atún fresco con mezcla de verdes, pepino y jitomate cherry', 'Ensaladas', 40, 45.00, 'Deli_Tuna_CH.jpg', 'PENDIENTE', 1),
+    (11, 'Pack Protein Bars (Propuesta)', 'Pack 12 barritas proteicas sabor chocolate y vainilla',          'Snacks Fit',       60, 25.00, 'barritas_proteicas.jpg', 'PENDIENTE', 2),
 ]
-c.executemany("INSERT INTO producto (ID_PRODUCTO,NOMBRE,DESCRIPCION,CATEGORIA,CANTIDAD,PRECIO,IMAGEN,ESTADO_APROBACION) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", prods)
-
-# 6. Vincular productos pendientes con proveedores
-c.executemany("INSERT INTO producto_proveedor (ID_PRODUCTO,ID_PROVEEDOR) VALUES (%s,%s)", [(10,1), (11,2)])
+c.executemany("INSERT INTO producto (ID_PRODUCTO,NOMBRE,DESCRIPCION,CATEGORIA,CANTIDAD,PRECIO,IMAGEN,ESTADO_APROBACION,ID_PROVEEDOR) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", prods)
 
 # 7. Clientes — orden real: ID_CLIENTE, NOMBRE, APELLIDO_PATERNO, APELLIDO_MATERNO, DIRECCION, TELEFONO
 clientes = [
