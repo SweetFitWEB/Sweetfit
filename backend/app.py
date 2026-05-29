@@ -1797,6 +1797,8 @@ def eliminar_empleado(id):
 # Ruta de prueba
 @app.route('/api/test')
 def test_conexion():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     try:
         conn = get_db()
         if conn.is_connected():
@@ -1995,6 +1997,8 @@ def aprobar_producto(id_producto):
 
 @app.route('/db/config')
 def db_config_view():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     return f'''<h1>Config BD</h1>
 <pre>
 Host: {os.environ.get('DB_HOST', 'localhost')}
@@ -2007,6 +2011,8 @@ Database: {os.environ.get('DB_NAME', 'sweetfit')}
 
 @app.route('/db/migrate')
 def db_migrate():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     """Agrega columnas para pedidos web a la tabla venta si no existen."""
     resultados = []
     try:
@@ -2037,6 +2043,8 @@ def db_migrate():
 
 @app.route('/db/seed')
 def db_seed():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     from werkzeug.security import generate_password_hash
     from datetime import datetime, timedelta
     import random
@@ -2215,6 +2223,8 @@ def db_seed():
 
 @app.route('/db')
 def db_explorer():
+    if request.headers.get('X-User-Role') != 'Administrador':
+        return jsonify({'error': 'Acceso denegado'}), 403
     tables = ['empleado','cliente','proveedor','producto','venta','detalle_venta','compra','detalle_compra']
     html = '<h1>Sweetfit - BD Explorer</h1>'
     try:
