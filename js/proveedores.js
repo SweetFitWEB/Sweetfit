@@ -11,6 +11,7 @@ function initProveedoresPage() {
     document.querySelector(".btn-nueva-compra")?.addEventListener("click", abrirModalCompra);
     document.getElementById("formCompra")?.addEventListener("submit", guardarCompra);
     document.getElementById("filtroFecha")?.addEventListener("change", cargarHistorialCompras);
+    document.getElementById("proveedorSelect")?.addEventListener("change", cargarProductosProveedor);
 
     const buscador = document.getElementById("buscadorProveedores");
     if (buscador && !buscador.dataset.listener) {
@@ -197,11 +198,11 @@ async function guardarCompra(e) {
   const total = productosUnicos.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
 
   const payload = {
-    id_proveedor: proveedorId,
-    id_empleado: empleadoId,
+    proveedor: proveedorId,
+    empleado: empleadoId,
     total: total,
     productos: productosUnicos.map(p => ({
-      id_producto: p.id,
+      id: p.id,
       cantidad: p.cantidad,
       precio: p.precio
     }))
@@ -267,32 +268,39 @@ function actualizarListaProductosCompra() {
   const contenedor = document.getElementById("listaProductosCompra");
   if (!contenedor) return;
   
+  if (productosCompra.length === 0) {
+    contenedor.innerHTML = `<p class="compra-vacio-msg">Aún no se han agregado productos a esta compra.</p>`;
+    return;
+  }
+  
   contenedor.innerHTML = "";
   let total = 0;
   
   productosCompra.forEach(prod => {
-    const div = document.createElement("div");
-    div.style.display = "flex";
-    div.style.justifyContent = "space-between";
-    div.style.marginBottom = "5px";
-    
     const subtotal = prod.cantidad * prod.precio;
     total += subtotal;
     
-    div.innerHTML = `
-      <span>${prod.nombre} - ${prod.cantidad} unidades</span>
-      <span>$${subtotal.toFixed(2)}</span>
-      <button type="button" class="btn-eliminar" onclick="eliminarProductoCompra(${prod.id})" style="padding:2px 5px; font-size:12px;">❌</button>
+    const row = document.createElement("div");
+    row.className = "compra-item-row";
+    row.innerHTML = `
+      <div class="compra-item-info">
+        <span class="compra-item-nombre">${prod.nombre}</span>
+        <span class="compra-item-detalles">${prod.cantidad} unidades × $${parseFloat(prod.precio).toFixed(2)}</span>
+      </div>
+      <div class="compra-item-acciones">
+        <span class="compra-item-subtotal">$${subtotal.toFixed(2)}</span>
+        <button type="button" class="compra-btn-eliminar" onclick="eliminarProductoCompra(${prod.id})" title="Eliminar item">❌</button>
+      </div>
     `;
-    contenedor.appendChild(div);
+    contenedor.appendChild(row);
   });
   
   const divTotal = document.createElement("div");
-  divTotal.style.fontWeight = "bold";
-  divTotal.style.marginTop = "10px";
-  divTotal.style.borderTop = "1px solid #ccc";
-  divTotal.style.paddingTop = "5px";
-  divTotal.innerHTML = `Total de compra: $${total.toFixed(2)}`;
+  divTotal.className = "compra-total-row";
+  divTotal.innerHTML = `
+    <span>Total de la Compra:</span>
+    <span class="compra-total-precio">$${total.toFixed(2)}</span>
+  `;
   contenedor.appendChild(divTotal);
 }
 

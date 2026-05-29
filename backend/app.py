@@ -480,13 +480,13 @@ def editar_producto(id_producto):
             if imagen:
                 query = """UPDATE producto 
                            SET NOMBRE = %s, DESCRIPCION = %s, CATEGORIA = %s, 
-                               CANTIDAD = %s, PRECIO = %s, IMAGEN = %s 
+                               CANTIDAD = %s, PRECIO = %s, IMAGEN = %s, ESTADO_APROBACION = 'APROBADO' 
                            WHERE ID_PRODUCTO = %s"""
                 cursor.execute(query, (nombre, descripcion, categoria, cantidad, precio, imagen, id_producto))
             else:
                 query = """UPDATE producto 
                            SET NOMBRE = %s, DESCRIPCION = %s, CATEGORIA = %s, 
-                               CANTIDAD = %s, PRECIO = %s 
+                               CANTIDAD = %s, PRECIO = %s, ESTADO_APROBACION = 'APROBADO' 
                            WHERE ID_PRODUCTO = %s"""
                 cursor.execute(query, (nombre, descripcion, categoria, cantidad, precio, id_producto))
 
@@ -1098,6 +1098,7 @@ def obtener_proveedores():
     
 #Obtener productos por proveedor
 @app.route('/api/productoproveedor/<int:id_proveedor>', methods=['GET'])
+@app.route('/api/proveedores/<int:id_proveedor>/productos', methods=['GET'])
 def obtener_productoproveedor(id_proveedor):
     try: 
         conn = get_db()
@@ -1859,7 +1860,7 @@ def extranet_agregar_producto(id_proveedor):
         nombre = data.get('nombre')
         descripcion = data.get('descripcion', '')
         categoria = data.get('categoria', 'Hamburguesas')
-        cantidad = data.get('cantidad', 0)
+        cantidad = 0
         precio = data.get('precio', 0)
         imagen = data.get('imagen', '')
 

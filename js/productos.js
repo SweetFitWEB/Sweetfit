@@ -121,7 +121,9 @@ async function cargarProductos(categoria = null, pagina = 1, texto = "") {
       (data.productos || []).forEach((prod) => {
         const card = document.createElement("div");
         card.className = "producto-card";
+        const badgeNuevo = prod.cantidad === 0 ? `<span class="badge-nuevo">Nuevo</span>` : "";
         card.innerHTML = `
+          ${badgeNuevo}
           <img src="${API}/uploads/${prod.imagen}" alt="${prod.nombre}" />
           <h3>${prod.nombre}</h3>
           <p class="desc">${prod.descripcion}</p>
@@ -262,9 +264,9 @@ async function cargarAprobaciones() {
         
         div.innerHTML = `
           <h4>${prod.NOMBRE} <span style="font-size:12px; font-weight:normal; color:#666;">Propuesto por: ${prod.proveedor_nombre}</span></h4>
-          <p style="margin:5px 0;"><strong>Cat:</strong> ${prod.CATEGORIA} | <strong>Precio:</strong> $${prod.PRECIO}</p>
+          <p style="margin:5px 0;"><strong>Cat:</strong> ${prod.CATEGORIA} | <strong>Precio sugerido:</strong> $${prod.PRECIO}</p>
           <div style="margin-top:10px;">
-            <button onclick="procesarAprobacion(${prod.ID_PRODUCTO}, 'APROBADO')" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Aprobar</button>
+            <button onclick="aprobarYEditarProducto(${prod.ID_PRODUCTO})" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Aprobar y Configurar</button>
             <button onclick="procesarAprobacion(${prod.ID_PRODUCTO}, 'RECHAZADO')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Rechazar</button>
           </div>
         `;
@@ -295,6 +297,14 @@ async function procesarAprobacion(idProducto, estado) {
   }
 }
 window.procesarAprobacion = procesarAprobacion;
+
+async function aprobarYEditarProducto(idProducto) {
+  const modalAprobaciones = document.getElementById("modalAprobaciones");
+  if (modalAprobaciones) modalAprobaciones.style.display = "none";
+  
+  await editarProducto(idProducto);
+}
+window.aprobarYEditarProducto = aprobarYEditarProducto;
 
 // Ocultar botón de aprobaciones si no es admin
 document.addEventListener("DOMContentLoaded", () => {
