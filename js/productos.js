@@ -234,7 +234,13 @@ async function guardarProducto(e) {
   }
 
   try {
-    const response = await fetch(url, { method, body: formData });
+    const usuario = getUsuarioData();
+    const headers = {};
+    if (usuario) {
+      headers['X-User-Role'] = usuario.puesto;
+      headers['X-User-Id'] = usuario.id;
+    }
+    const response = await fetch(url, { method, body: formData, headers });
     if (response.ok) {
       mostrarNotificacion("Producto guardado exitosamente", "success");
       const modal = document.getElementById("modalAgregarProducto");
